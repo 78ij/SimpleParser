@@ -196,6 +196,13 @@ PublishScripts/
 csx/
 *.build.csdef
 
+# self-defined
+*.txt
+*.nocomment
+*.nodefine
+*.noinclude
+*.incl
+
 # Microsoft Azure Emulator
 ecf/
 rcf/

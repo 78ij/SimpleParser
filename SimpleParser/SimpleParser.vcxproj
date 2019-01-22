@@ -124,6 +124,7 @@
     <ClInclude Include="include\preprocessor.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\lexer.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\preprocessor.cpp" />
   </ItemGroup>
