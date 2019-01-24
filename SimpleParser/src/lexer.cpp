@@ -4,6 +4,12 @@ namespace simple {
 	void token::convert() {
 		switch (type) {
 		case CINT:
+			if (val[0] == '0') {
+				if (val.find('9') != val.npos || val.find('8') != val.npos) {
+					type = ERROR;
+					break;
+				}
+			}
 			icval = (int)stoll(val,nullptr,0);
 			break;
 		case CUINT:
@@ -33,8 +39,18 @@ namespace simple {
 			tok.type = LT;
 		if (c == '>') 
 			tok.type = GT;
-		if (c == '=')
-			tok.type = ASSIGN;
+		if (c == '!') {
+			char t;
+			file.get(t);
+			if (t == '=') {
+				tok.type = EQ;
+				tok.val = "!=";
+			}
+			else {
+				tok.type = ASSIGN;
+				file.unget();
+			}
+		}
 		if (c == '(')
 			tok.type = LP;
 		if (c == ')')
@@ -75,6 +91,18 @@ namespace simple {
 			if (t == '|') {
 				tok.type = OR;
 				tok.val = "||";
+			}
+			else {
+				tok.type = ERROR;
+				file.unget();
+			}
+		}
+		if (c == '!') {
+			char t;
+			file.get(t);
+			if (t == '=') {
+				tok.type = NEQ;
+				tok.val = "!=";
 			}
 			else {
 				tok.type = ERROR;
@@ -204,7 +232,7 @@ namespace simple {
 				}
 				else if (isdigit(c)) {
 					tmp.push_back(c);
-					state = OCTINT;
+					state = FLOAT_OR_INT;
 				}
 				else if (c == '.') {
 					tmp.push_back(c);
@@ -395,6 +423,7 @@ namespace simple {
 						file.get();
 					}
 					else if (c == 'l' || c == 'L') {
+						file.get();
 						tok.type = CLONG;
 					}
 					else tok.type = CINT;
@@ -415,6 +444,7 @@ namespace simple {
 					if (tok.val == "extern") tok.type = EXTERN;
 					if (tok.val == "continue") tok.type = CONTINUE;
 					if (tok.val == "unsigned") tok.type = UNSIGNED;
+					if (tok.val == "void") tok.type = VOID;
 				}
 				file.unget();
 				if (c == '\n') row--;
