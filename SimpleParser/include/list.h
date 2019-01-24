@@ -32,6 +32,7 @@ namespace simple {
 			data[length++] = tmp;
 		}
 		T remove() {
+			delete data[length - 1];
 			T tmp = *(data[length - 1]);
 			length--;
 			return tmp;

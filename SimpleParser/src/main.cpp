@@ -14,7 +14,12 @@ int main() {
 	}
 	lexer lex("sample.txt.pre.nodefine");
 	token tok = lex.gettoken();
+	int row = 0;
 	while (tok.type != tokentype::END) {
+		if (row != lex.row) {
+			row = lex.row;
+			cout << row << ": " << endl;
+		}
 		tok.print();
 		tok = lex.gettoken();
 	}
