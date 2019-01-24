@@ -33,12 +33,36 @@ namespace simple {
 	token lexer::isspsymbol(char c) {
 		token tok;
 		tok.type = ERROR;
+		if (c == '!')
+			tok.type = NOT;
+		if (c == ',')
+			tok.type = COMMA;
 		if (c == ';')
 			tok.type = SEMI;
-		if (c == '<') 
-			tok.type = LT;
-		if (c == '>') 
-			tok.type = GT;
+		if (c == '<') {
+			char t;
+			file.get(t);
+			if (t == '=') {
+				tok.type = LE;
+				tok.val = "!=";
+			}
+			else {
+				tok.type = LT;
+				file.unget();
+			}
+		}
+		if (c == '>') {
+			char t;
+			file.get(t);
+			if (t == '=') {
+				tok.type = GE;
+				tok.val = "!=";
+			}
+			else {
+				tok.type = GT;
+				file.unget();
+			}
+		}
 		if (c == '!') {
 			char t;
 			file.get(t);
@@ -47,7 +71,7 @@ namespace simple {
 				tok.val = "!=";
 			}
 			else {
-				tok.type = ASSIGN;
+				tok.type = NOT;
 				file.unget();
 			}
 		}
