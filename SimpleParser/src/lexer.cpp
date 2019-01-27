@@ -158,10 +158,14 @@ namespace simple {
 		lexerstate state = START;
 		char c;
 		string tmp;
+		int prevcol = 1;
 		token tok;
 		while (file.get(c)) {
+			col++;
+			prevcol++;
 			if (c == '\n') {
 				row++;
+				col = 1;
 			}
 			switch (state) {
 			case START:

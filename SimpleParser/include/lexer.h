@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <include/list.h>
+#include <include/error.h>
 
 using std::cin;
 using std::cout;
@@ -51,6 +52,7 @@ namespace simple {
 
 	struct token {
 		tokentype type;
+		int row, col;
 		string val; // convert using string.stoi, etc
 		int icval;
 		unsigned int iuval;
@@ -85,12 +87,18 @@ namespace simple {
 	class lexer {
 	public:
 		lexer() = delete;
-		lexer(string _path) :path(_path), file(_path),row(1){}
+		lexer(string _path) :path(_path), file(_path),row(1),col(1){
+		/*	string tmp;
+			while (file.getline(tmp.data, 1000)) {
+				source.append(tmp);
+			}*/
+		    
+		}
 		token gettoken();
-		int row;
+		int row, col;
 	private:
 		token isspsymbol(char c);
-		list<string> symbols; // Symbol list
+		list<string> source; // Symbol list
 		string path;
 		ifstream file;
 	};

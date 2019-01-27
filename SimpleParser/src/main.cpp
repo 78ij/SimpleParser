@@ -8,7 +8,6 @@ using simple::tokentype;
 using simple::token;
 using simple::list;
 using simple::parser;
-using simple::ast_node_assg;
 
 int main() {
 	list<token> toklist;
@@ -46,9 +45,9 @@ int main() {
 	for (int i = 0; i < size; i++) {
 		toklist[i].print();
 	}
-	cout << "Token number: " << size << endl;
+	cout << "Token Count: " << size << endl;
 	cout << "\n\n";
-	parser pa("");
+	parser pa("sample.txt");
 	pa.test();
 	system("pause");
 }

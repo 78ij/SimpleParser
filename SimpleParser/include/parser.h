@@ -234,20 +234,45 @@ namespace simple {
 			token_table.append(eof); // Make sure EOF is properly recognized
 		}
 	private:
+		struct parm_type {
+			bool isarray;
+			string ident;
+			tokentype type;
+		};
+		struct var_dec {
+			bool isarray;
+			int arraysize;
+			string ident;
+		};
+		ast_node *prog();
+		ast_node *dcl();
+		ast_node *stmt();
+		ast_node *func();
+		ast_node *assg();
+		ast_node *expr();
+		list<parm_type> &parm_types();
+		list<var_dec> &var_decl();
+		
 		lexer l;
 		ast_node *root;
-		int cur_token = 0;
+		int cur_tokpos = 0;
 		token cur_tok;
 		int accept(token tok) {
 			if (tok.type == cur_tok.type) {
-				cur_tok = next();
+				next();
 			}
 		}
-		token next() {
-			return token_table[cur_token++];
+		void expect(tokentype type) {
+			next();
+			if (cur_tok.type != type) {
+				error e();
+			}
+		}
+		void next() {
+			cur_tok = token_table[cur_tokpos++];
 		}
 		void unget(token tok) {
-			token_table[cur_token--] = tok;
+			token_table[cur_tokpos--] = tok;
 		}
 	};
 

@@ -58,6 +58,8 @@ assg		:= IDENT [LB expr RB] ASSIGN expr
 
 expr		:= MINUS expr
 
+​			| PLUS expr
+
 ​			| NOT expr
 
 ​			| expr binop expr
