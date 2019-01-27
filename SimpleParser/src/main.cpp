@@ -1,12 +1,17 @@
 #include "include/preprocessor.h"
-#include "include/lexer.h"
+#include "include/list.h"
+#include "include/parser.h"
 
 using simple::preproc;
 using simple::lexer;
 using simple::tokentype;
 using simple::token;
+using simple::list;
+using simple::parser;
+using simple::ast_node_assg;
 
 int main() {
+	list<token> toklist;
 	preproc p("sample.txt");
 	if (!(p.proc())) {
 		system("pause");
@@ -15,6 +20,7 @@ int main() {
 	lexer lex("sample.txt.pre.nodefine");
 	token tok = lex.gettoken();
 	int row = 0;
+	toklist.append(tok);
 	while (tok.type != tokentype::END) {
 		if (row != lex.row) {
 			row = lex.row;
@@ -22,6 +28,27 @@ int main() {
 		}
 		tok.print();
 		tok = lex.gettoken();
+		toklist.append(tok);
 	}
+	int size = toklist.length;
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size - i - 1; j++) {
+			if (toklist[j].type > toklist[j + 1].type) {
+				token tmp;
+				tmp = toklist[j];
+				toklist[j] = toklist[j + 1];
+				toklist[j + 1] = tmp;
+			}
+		}
+	}
+	cout << endl;
+	cout << "Tokens in ascending order: " << endl;
+	for (int i = 0; i < size; i++) {
+		toklist[i].print();
+	}
+	cout << "Token number: " << size << endl;
+	cout << "\n\n";
+	parser pa("");
+	pa.test();
 	system("pause");
 }

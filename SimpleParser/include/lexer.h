@@ -30,23 +30,23 @@ namespace simple {
 	};
 
 	enum tokentype {
-		ERROR, END,
+		ERROR = 0, END,
 		IDENT,
 		SHORT, LONG, INT, CHAR, FLOAT, DOUBLE,
-		CUINT, CINT, CLONG,CULONG, CCHAR, CDOUBLE,CFLOAT,VOID,
-		LP, RP, LB, RB, LC, RC,COMMA,
-		LT, GT, LE, GE, EQ, NEQ,OR, AND, ASSIGN,NOT,
-		SEMI, IF, ELSE,WHILE, FOR, RETURN, BREAK, CONTINUE, EXTERN,UNSIGNED,
-		PLUS,MINUS,MULTIPLY,DIVIDE,MOD
+		CUINT, CINT, CLONG, CULONG, CCHAR, CDOUBLE, CFLOAT, VOID,
+		LP, RP, LB, RB, LC, RC, COMMA,
+		LT, GT, LE, GE, EQ, NEQ, OR, AND, ASSIGN, NOT,
+		SEMI, IF, ELSE, WHILE, FOR, RETURN, BREAK, CONTINUE, EXTERN, UNSIGNED,
+		PLUS, MINUS, MULTIPLY, DIVIDE, MOD
 	};
 	// Unsupported: const string, ++,-- and lots of other things.
 	const string tokens[] = {
-		"ERROR","END","IDENT","SHORT","LONG","INT","CHAR","FLOAT","DOUBLE",
-		"CUINT","CINT","CLONG","CULONG","CCHAR","CDOUBLE","CFLOAT","VOID",
-		"LP","RP","LB","RB","LC","RC","COMMA"
-		"LT","GT","LE","GE","EQ","NEQ","OR","AND","ASSIGN","NOT",
-		"SEMI","IF","ELSE","WHILE","FOR","RETURN","BREAK","CONTINUE","EXTERN","UNSIGNED",
-		"PLUS","MINUS","MULTIPLY","DIVIDE","MOD"
+		"ERROR", "END", "IDENT", "SHORT", "LONG", "INT", "CHAR", "FLOAT", "DOUBLE",
+		"CUINT", "CINT", "CLONG", "CULONG", "CCHAR", "CDOUBLE", "CFLOAT", "VOID",
+		"LP", "RP", "LB", "RB", "LC", "RC", "COMMA",
+		"LT", "GT", "LE", "GE", "EQ", "NEQ", "OR", "AND", "ASSIGN", "NOT",
+		"SEMI", "IF", "ELSE", "WHILE", "FOR", "RETURN", "BREAK", "CONTINUE", "EXTERN", "UNSIGNED",
+		"PLUS", "MINUS", "MULTIPLY", "DIVIDE", "MOD"
 	};
 
 	struct token {
@@ -58,12 +58,15 @@ namespace simple {
 		double dval;
 		void print() {
 			convert();
-			cout << "Token Type: " << tokens[type] << endl;
+			cout << "Token No. :" << type << "    ";
+			cout << "Token Type: " << tokens[type] << "   ";
 			cout << "String: " << val << "\t";
 			switch (type) {
+			case CLONG:
 			case CINT:
 				cout << "Value: " << icval;
 				break;
+			case CULONG:
 			case CUINT:
 				cout << "Value: " << iuval;
 				break;

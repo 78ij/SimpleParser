@@ -19,11 +19,11 @@ namespace simple {
 			free(data);
 		}
 		size_t size;
-		size_t length;
+		int length;
 		T & operator[](int index) {
 			return *(data[index]);
 		}
-		void append(T &ele) {
+		void append(T ele) {
 			if (length == size) {
 				data = (T **)realloc(data, (size + 100) * sizeof(T*));
 			}

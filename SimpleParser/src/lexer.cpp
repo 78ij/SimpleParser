@@ -3,6 +3,7 @@
 namespace simple {
 	void token::convert() {
 		switch (type) {
+		case CLONG:
 		case CINT:
 			if (val[0] == '0') {
 				if (val.find('9') != val.npos || val.find('8') != val.npos) {
@@ -12,6 +13,7 @@ namespace simple {
 			}
 			icval = (int)stoll(val,nullptr,0);
 			break;
+		case CULONG:
 		case CUINT:
 			iuval = (unsigned int)(stoi(val, nullptr, 0));
 			break;
@@ -67,7 +69,7 @@ namespace simple {
 			char t;
 			file.get(t);
 			if (t == '=') {
-				tok.type = EQ;
+				tok.type = NEQ;
 				tok.val = "!=";
 			}
 			else {
@@ -130,6 +132,18 @@ namespace simple {
 			}
 			else {
 				tok.type = ERROR;
+				file.unget();
+			}
+		}
+		if (c == '=') {
+			char t;
+			file.get(t);
+			if (t == '=') {
+				tok.type = EQ;
+				tok.val = "==";
+			}
+			else {
+				tok.type = ASSIGN;
 				file.unget();
 			}
 		}

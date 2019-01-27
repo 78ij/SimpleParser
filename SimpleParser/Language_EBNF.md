@@ -4,7 +4,7 @@
 
 prog		 := {dcl SEMI | func}
 
-del			 := type var_decl { COMMA var_decl}
+dcl			 := [EXTERN] type var_decl { COMMA var_decl}
 
 ​			| [EXTERN] type IDENT LP parm_types RP {COMMA IDENT LP parm_types RP }
 
@@ -13,6 +13,8 @@ del			 := type var_decl { COMMA var_decl}
 var_decl		:= IDENT [ LB CINT RB]
 
 type		:= INT
+
+​			| UNSIGNED [INT | LONG | SHORT | CHAR]
 
 ​			| CHAR
 
@@ -30,7 +32,7 @@ parm_types	:= VOID
 
 func 		:= type IDENT LP parm_types RP LC {type var_decl {COMMA var_decl} SEMI} {stmt} RC
 
-​			|  VOID IDENT LP parm_types RP LC {type var_decl {COMMA var_decl} SEMI} {stmt} RC
+​			|  VOID IDENT LP parm_types RP LC {type var_decl {COMMA var_decl} SEMI} {stmt} RC #func def
 
 stmt		:= IF LP expr RP stmt [ELSE stmt]
 
@@ -40,11 +42,15 @@ stmt		:= IF LP expr RP stmt [ELSE stmt]
 
 ​			| RETURN [expr] SEMI
 
-​			| assg SEMI
-
-​			| IDENT LP [expr{ COMMA expr}] RP SEMI
+​			| IDENT LP [expr{ COMMA expr}] RP SEMI # func call
 
 ​			| LC {stmt} RC
+
+​			| assg SEMI
+
+​			| BREAK SEMI
+
+​			| CONTINUE SEMI
 
 ​			| SEMI
 
@@ -66,17 +72,7 @@ expr		:= MINUS expr
 
 ​			| CINT
 
-​			| CCHAR
-
-​			| CFLOAT
-
-​			| CUINT
-
-​			| CLONG
-
-​			| CULONG
-
-​			| CFLOAT
+​			 
 
 binop		:= PLUS
 
