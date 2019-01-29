@@ -1,6 +1,24 @@
 #include "include/parser.h"
 
 namespace simple {
+
+	tokentype parser::type() {
+		bool isunsigned = false;
+		tokentype t = cur_tok.type;
+		if (t == UNSIGNED) {
+			isunsigned = true;
+			next();
+			if (t == INT) return UINT;
+			if (t == LONG) return ULONG;
+			if (t == SHORT) return USHORT;
+			if (t == CHAR)return UCHAR;
+		}
+		else if (t == INT || t == CHAR || t == FLOAT || t == DOUBLE || t == SHORT || t == LONG || t == VOID) {
+			return t;
+		}
+		else unexpect();
+	}
+
 	ast_node *parser::prog() {
 		ast_node_prog *ret = new ast_node_prog;
 		ast_node *tmp1;
@@ -21,11 +39,20 @@ namespace simple {
 		return ret;
 	}
 	ast_node *parser::dcl() {
-		bool ext = false;
 		next();
-		if (cur_tok.type == EXTERN) ext = true;
+		if (cur_tok.type == EXTERN) {
+			tokentype t = type();
+			next();
+			if (cur_tok.type = IDENT) {
+				accept(LP);
+				
+			}
+			else {
+
+			}
+		}
 		else {
-			
+
 		}
 		return nullptr;
 		

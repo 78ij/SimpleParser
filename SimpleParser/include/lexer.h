@@ -10,6 +10,7 @@
 #include <include/error.h>
 
 using std::cin;
+using std::getline;
 using std::cout;
 using std::endl;
 using std::stoi;
@@ -33,7 +34,7 @@ namespace simple {
 	enum tokentype {
 		ERROR = 0, END,
 		IDENT,
-		SHORT, LONG, INT, CHAR, FLOAT, DOUBLE,
+		SHORT, LONG, INT, CHAR, FLOAT, DOUBLE,UINT,ULONG,USHORT,UCHAR,
 		CUINT, CINT, CLONG, CULONG, CCHAR, CDOUBLE, CFLOAT, VOID,
 		LP, RP, LB, RB, LC, RC, COMMA,
 		LT, GT, LE, GE, EQ, NEQ, OR, AND, ASSIGN, NOT,
@@ -42,7 +43,7 @@ namespace simple {
 	};
 	// Unsupported: const string, ++,-- and lots of other things.
 	const string tokens[] = {
-		"ERROR", "END", "IDENT", "SHORT", "LONG", "INT", "CHAR", "FLOAT", "DOUBLE",
+		"ERROR", "END", "IDENT", "SHORT", "LONG", "INT", "CHAR", "FLOAT", "DOUBLE","UINT","ULONG","USHORT","UCHAR",
 		"CUINT", "CINT", "CLONG", "CULONG", "CCHAR", "CDOUBLE", "CFLOAT", "VOID",
 		"LP", "RP", "LB", "RB", "LC", "RC", "COMMA",
 		"LT", "GT", "LE", "GE", "EQ", "NEQ", "OR", "AND", "ASSIGN", "NOT",
@@ -88,17 +89,19 @@ namespace simple {
 	public:
 		lexer() = delete;
 		lexer(string _path) :path(_path), file(_path),row(1),col(1){
-		/*	string tmp;
-			while (file.getline(tmp.data, 1000)) {
+			string tmp;
+			while (getline(file,tmp,'\n')) {
 				source.append(tmp);
-			}*/
-		    
+			}
+			file.clear();
+			file.close();
+			file = ifstream(_path);
 		}
 		token gettoken();
+		list<string> source; // Source
 		int row, col;
 	private:
 		token isspsymbol(char c);
-		list<string> source; // Symbol list
 		string path;
 		ifstream file;
 	};

@@ -140,10 +140,11 @@ namespace simple {
 
 	class ast_node_funcdec : public ast_node {
 	public:
-		bool isextern;
+		bool isext;
 		tokentype ret;
 		string id;
 		list<tokentype> types;
+		list<bool> isarray;
 		void print(int l) override {
 			pl(l);
 			cout << "ASTNode Type: Function Declare, id: " << id << "Returns: " << tokens[ret] << "Types: ";
@@ -159,6 +160,7 @@ namespace simple {
 		tokentype ret;
 		string id;
 		list<tokentype> types;
+		list<bool> isarray;
 		ast_node *body;
 		void print(int l) override {
 			pl(l);
@@ -179,6 +181,7 @@ namespace simple {
 		bool isext;
 		tokentype type;
 		list<string> id;
+		bool isarray;
 		void print(int l) override {
 			pl(l);
 			cout << "ASTNode Type: Variable Declare, type: " << tokens[type]  << "id: ";
@@ -244,6 +247,7 @@ namespace simple {
 			int arraysize;
 			string ident;
 		};
+		tokentype type();
 		ast_node *prog();
 		ast_node *dcl();
 		ast_node *stmt();
@@ -257,16 +261,20 @@ namespace simple {
 		ast_node *root;
 		int cur_tokpos = 0;
 		token cur_tok;
-		int accept(token tok) {
-			if (tok.type == cur_tok.type) {
+		int accept(tokentype tok) {
+			next();
+			if (cur_tok.type == tok) {
 				next();
 			}
-		}
-		void expect(tokentype type) {
-			next();
-			if (cur_tok.type != type) {
-				error e();
+			else {
+				unexpect();
 			}
+		}
+		void unexpect() {
+			error e(cur_tok.row, cur_tok.col, "Unexpected token", l.source[cur_tok.row - 1]);
+			e.print();
+			system("pause");
+			exit(-1);
 		}
 		void next() {
 			cur_tok = token_table[cur_tokpos++];

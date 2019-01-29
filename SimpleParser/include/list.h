@@ -8,7 +8,7 @@ namespace simple {
 	public:
 		T **data;
 		list() {
-			data = (T **)malloc(100 * sizeof(T*));
+			data = (T **)malloc( * sizeof(T*));
 			size = 100;
 			length = 0;
 		}

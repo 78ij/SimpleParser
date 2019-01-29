@@ -158,11 +158,9 @@ namespace simple {
 		lexerstate state = START;
 		char c;
 		string tmp;
-		int prevcol = 1;
 		token tok;
 		while (file.get(c)) {
 			col++;
-			prevcol++;
 			if (c == '\n') {
 				row++;
 				col = 1;
@@ -203,7 +201,10 @@ namespace simple {
 					tok.type = IDENT;
 					tok.val = tmp;
 					file.unget();
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 				}
 				else {
 					tmp.push_back(c);
@@ -216,7 +217,10 @@ namespace simple {
 					tok.type = ERROR;
 					tok.val = tmp;
 					state = DONE;
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 				}
 				else if (c == '\\') {
 					tmp.push_back(c);
@@ -234,7 +238,10 @@ namespace simple {
 							tok.type = CCHAR;
 							tok.val = tmp;
 							state = DONE;
-							if (c == '\n') row--;
+							if (c == '\n') {
+								row--;
+								col = source[row].size() - 1;
+							}
 						}
 					}
 				}
@@ -246,7 +253,10 @@ namespace simple {
 						tok.type = CCHAR;
 						tok.val = tmp;
 						state = DONE;
-						if (c == '\n') row--;
+						if (c == '\n') {
+							row--;
+							col = source[row].size() - 1;
+						}
 					}
 					else {
 						tmp.push_back(t2);
@@ -264,7 +274,10 @@ namespace simple {
 					tok.type = ERROR;
 					tok.val = tmp;
 					state = DONE;
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 				}
 				break;
 			case ZERO:
@@ -281,7 +294,10 @@ namespace simple {
 					state = FLOAT_C;
 				}
 				else {
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 					file.unget();
 					state = INT_C;
 				}
@@ -311,7 +327,10 @@ namespace simple {
 					state = DONE;
 					tok.val = tmp;
 					file.unget();
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 				}
 				break;
 			case OCTINT:
@@ -335,7 +354,10 @@ namespace simple {
 					state = DONE;
 					tok.val = tmp;
 					file.unget();
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 				}
 				break;
 			case FLOAT_OR_INT:
@@ -359,7 +381,10 @@ namespace simple {
 						state = ERR;
 						break;
 					}
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 					file.unget();
 					state = E_FLOAT_C;
 				}
@@ -372,7 +397,10 @@ namespace simple {
 					state = FLOAT_C;
 				}
 				else {
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 					file.unget();
 					state = INT_C;
 				}
@@ -398,7 +426,10 @@ namespace simple {
 						state = ERR;
 						break;
 					}
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 					file.unget();
 					state = E_FLOAT_C;
 				}
@@ -411,7 +442,10 @@ namespace simple {
 					state = DONE;
 					tok.val = tmp;
 					file.unget();
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 				}
 				break;
 			case E_FLOAT_C:
@@ -425,7 +459,10 @@ namespace simple {
 					state = DONE;
 					tok.val = tmp;
 					file.unget();
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 				}
 				break;
 			case FLOAT_C:
@@ -444,7 +481,10 @@ namespace simple {
 					state = DONE;
 					tok.val = tmp;
 					file.unget();
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 				}
 				break;
 			case INT_C:
@@ -472,7 +512,10 @@ namespace simple {
 					state = DONE;
 					tok.val = tmp;
 					file.unget();
-					if (c == '\n') row--;
+					if (c == '\n') {
+						row--;
+						col = source[row].size() - 1;
+					}
 				}
 				break;
 			case DONE:
@@ -488,14 +531,24 @@ namespace simple {
 					if (tok.val == "unsigned") tok.type = UNSIGNED;
 					if (tok.val == "void") tok.type = VOID;
 				}
+				tok.row = row;
+				tok.col = col;
 				file.unget();
-				if (c == '\n') row--;
+				if (c == '\n') {
+					row--;
+					col = source[row - 1].size() - 1;
+				}
 				return tok;
 				break;
 			case ERR:
 				file.unget();
-				if (c == '\n') row--;
+				if (c == '\n') {
+					row--;
+					col = source[row - 1].size() - 1;
+				}
 				tok.type = ERROR;
+				tok.row = row;
+				tok.col = col;
 				tok.val = tmp;
 				return tok;
 				break;

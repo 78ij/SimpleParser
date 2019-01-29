@@ -8,8 +8,6 @@ dcl			 := [EXTERN] type var_decl { COMMA var_decl}
 
 ​			| [EXTERN] type IDENT LP parm_types RP {COMMA IDENT LP parm_types RP }
 
-​			| [EXTERN] VOID IDENT LP parm_types RP {COMMA IDENT LP parm_types RP }
-
 var_decl		:= IDENT [ LB CINT RB]
 
 type		:= INT
@@ -26,9 +24,9 @@ type		:= INT
 
 ​			| LONG
 
-parm_types	:= VOID
+​			| VOID
 
-​			| type IDENT [LB RB] {COMMA type IDENT [LB RB]}
+parm_types	:=  type IDENT [LB RB] {COMMA type IDENT [LB RB]}
 
 func 		:= type IDENT LP parm_types RP LC {type var_decl {COMMA var_decl} SEMI} {stmt} RC
 
