@@ -8,7 +8,7 @@ namespace simple {
 	public:
 		T **data;
 		list() {
-			data = (T **)malloc( * sizeof(T*));
+			data = (T **)malloc(100 * sizeof(T*));
 			size = 100;
 			length = 0;
 		}
@@ -20,7 +20,7 @@ namespace simple {
 		}
 		size_t size;
 		int length;
-		T & operator[](int index) {
+		T & operator[](int index) const{
 			return *(data[index]);
 		}
 		void append(T ele) {
@@ -37,8 +37,26 @@ namespace simple {
 			length--;
 			return tmp;
 		}
-		list(list<T> &list) = delete;
-	};
+		list(const list<T> &other) {
+			data = (T **)malloc(other.size * sizeof(T*));
+			size = other.size;
+			length = other.length;
+			for (int i = 0; i < length; i++) {
+				data[i] = new T;
+				*(data[i]) = other[i];
+			}
+		}
+		list &operator=(const list &other) {
+			data = (T **)malloc(other.size * sizeof(T*));
+			size = other.size;
+			length = other.length;
+			for (int i = 0; i < length; i++) {
+				data[i] = new T;
+				*(data[i]) = other[i];
+			}
+			return *this;
+		}
+		};
 }
 
 #endif

@@ -48,6 +48,7 @@ int main() {
 	cout << "Token Count: " << size << endl;
 	cout << "\n\n";
 	parser pa("sample.txt");
-	pa.test();
+	pa.parse();
+	pa.print();
 	system("pause");
 }

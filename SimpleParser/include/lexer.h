@@ -9,6 +9,7 @@
 #include <include/list.h>
 #include <include/error.h>
 
+
 using std::cin;
 using std::getline;
 using std::cout;
@@ -61,9 +62,13 @@ namespace simple {
 		double dval;
 		void print() {
 			convert();
+			color(267);
 			cout << "Token No. :" << type << "    ";
+			color(270);
 			cout << "Token Type: " << tokens[type] << "   ";
+			color(11);
 			cout << "String: " << val << "\t";
+			color(13);
 			switch (type) {
 			case CLONG:
 			case CINT:
@@ -80,6 +85,7 @@ namespace simple {
 				cout << "Value: " << dval;
 				break;
 			}
+			color(263);
 			cout << endl;
 		}
 		void convert();
@@ -88,7 +94,7 @@ namespace simple {
 	class lexer {
 	public:
 		lexer() = delete;
-		lexer(string _path) :path(_path), file(_path),row(1),col(1){
+		lexer(string _path) :path(_path), file(_path),row(1),col(0){
 			string tmp;
 			while (getline(file,tmp,'\n')) {
 				source.append(tmp);

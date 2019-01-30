@@ -163,11 +163,13 @@ namespace simple {
 			col++;
 			if (c == '\n') {
 				row++;
-				col = 1;
+				col = 0;
 			}
 			switch (state) {
 			case START:
 				tok = isspsymbol(c);
+				tok.row = row;
+				tok.col = col - 1;
 				if (tok.type != ERROR) return tok;
 				if (isspace(c)) continue;
 				else if (isalpha(c)) {
@@ -198,12 +200,13 @@ namespace simple {
 			case ID:
 				if (!(isalnum(c))) {
 					state = DONE;
+					col--;
 					tok.type = IDENT;
 					tok.val = tmp;
 					file.unget();
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 				}
 				else {
@@ -217,9 +220,11 @@ namespace simple {
 					tok.type = ERROR;
 					tok.val = tmp;
 					state = DONE;
+					col--;
+
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 				}
 				else if (c == '\\') {
@@ -238,9 +243,10 @@ namespace simple {
 							tok.type = CCHAR;
 							tok.val = tmp;
 							state = DONE;
+							col--;
 							if (c == '\n') {
 								row--;
-								col = source[row].size() - 1;
+								col = source[row - 1].size() - 1;
 							}
 						}
 					}
@@ -253,9 +259,10 @@ namespace simple {
 						tok.type = CCHAR;
 						tok.val = tmp;
 						state = DONE;
+						col--;
 						if (c == '\n') {
 							row--;
-							col = source[row].size() - 1;
+							col = source[row - 1].size() - 1;
 						}
 					}
 					else {
@@ -274,9 +281,10 @@ namespace simple {
 					tok.type = ERROR;
 					tok.val = tmp;
 					state = DONE;
+					col--;
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 				}
 				break;
@@ -296,7 +304,7 @@ namespace simple {
 				else {
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 					file.unget();
 					state = INT_C;
@@ -325,11 +333,12 @@ namespace simple {
 					}
 					else tok.type = CINT;
 					state = DONE;
+					col--;
 					tok.val = tmp;
 					file.unget();
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 				}
 				break;
@@ -352,11 +361,12 @@ namespace simple {
 					}
 					else tok.type = CINT;
 					state = DONE;
+					col--;
 					tok.val = tmp;
 					file.unget();
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 				}
 				break;
@@ -383,7 +393,7 @@ namespace simple {
 					}
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 					file.unget();
 					state = E_FLOAT_C;
@@ -399,7 +409,7 @@ namespace simple {
 				else {
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 					file.unget();
 					state = INT_C;
@@ -428,7 +438,7 @@ namespace simple {
 					}
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 					file.unget();
 					state = E_FLOAT_C;
@@ -440,11 +450,12 @@ namespace simple {
 					}
 					else tok.type = CDOUBLE;
 					state = DONE;
+					col--;
 					tok.val = tmp;
 					file.unget();
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 				}
 				break;
@@ -457,11 +468,12 @@ namespace simple {
 					}
 					else tok.type = CDOUBLE;
 					state = DONE;
+					col--;
 					tok.val = tmp;
 					file.unget();
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 				}
 				break;
@@ -479,11 +491,12 @@ namespace simple {
 					}
 					else tok.type = CDOUBLE;
 					state = DONE;
+					col--;
 					tok.val = tmp;
 					file.unget();
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 				}
 				break;
@@ -510,17 +523,24 @@ namespace simple {
 					}
 					else tok.type = CINT;
 					state = DONE;
+					col--;
 					tok.val = tmp;
 					file.unget();
 					if (c == '\n') {
 						row--;
-						col = source[row].size() - 1;
+						col = source[row - 1].size() - 1;
 					}
 				}
 				break;
 			case DONE:
 				if (tok.type == IDENT) {
 					if (tok.val == "if") tok.type = IF;
+					if (tok.val == "int") tok.type = INT;
+					if (tok.val == "float") tok.type = FLOAT;
+					if (tok.val == "double") tok.type = DOUBLE;
+					if (tok.val == "char") tok.type = CHAR;
+					if (tok.val == "short") tok.type = SHORT;
+					if (tok.val == "long") tok.type = LONG;
 					if (tok.val == "else") tok.type = ELSE;
 					if (tok.val == "while") tok.type = WHILE;
 					if (tok.val == "for") tok.type = FOR;
@@ -531,6 +551,7 @@ namespace simple {
 					if (tok.val == "unsigned") tok.type = UNSIGNED;
 					if (tok.val == "void") tok.type = VOID;
 				}
+				col--;
 				tok.row = row;
 				tok.col = col;
 				file.unget();
@@ -556,6 +577,8 @@ namespace simple {
 			
 		}
 		tok.type = END;
+		tok.row = row;
+		tok.col = col;
 		return tok;
 	}
 }

@@ -3,12 +3,25 @@
 
 #include "include/lexer.h"
 
+
 namespace simple {
 	
 	inline void pl(int l) {
 		for (int i = 0; i < l; i++)
 			cout << '\t';
 	}
+
+	struct parm_type {
+		bool isarray;
+		string ident;
+		tokentype type;
+	};
+
+	struct var_dec {
+		bool isarray;
+		int arraysize;
+		string ident;
+	};
 
 	class ast_node {
 	public:
@@ -140,39 +153,38 @@ namespace simple {
 
 	class ast_node_funcdec : public ast_node {
 	public:
-		bool isext;
-		tokentype ret;
+		tokentype type;
 		string id;
-		list<tokentype> types;
-		list<bool> isarray;
+		list<parm_type> parms;
 		void print(int l) override {
 			pl(l);
-			cout << "ASTNode Type: Function Declare, id: " << id << "Returns: " << tokens[ret] << "Types: ";
-			for (int i = 0; i < types.length - 1; i++)
-				cout << tokens[types[i]] << ", ";
-			cout << tokens[types[types.length - 1]] << "\n";
+			cout << "ASTNode Type: Function Declare, id: " << id << "Returns: " << tokens[type] << "Types: ";
+			for (int i = 0; i < parms.length - 1; i++)
+				cout << tokens[parms[i].type] << ", ";
+			cout << tokens[parms[parms.length - 1].type] << "\n";
 		}
 	};
 
 	class ast_node_funcdef :public ast_node {
 	public:
-		bool isext;
 		tokentype ret;
 		string id;
-		list<tokentype> types;
-		list<bool> isarray;
-		ast_node *body;
+		list<parm_type> parms;
+		list<ast_node*> body;
 		void print(int l) override {
 			pl(l);
 			cout << "ASTNode Type: Function Define, id: " << id << "Returns: " << tokens[ret] << " Types: ";
-			if (types.length > 0) {
-				for (int i = 0; i < (types.length - 1); i++)
-					cout << tokens[types[i]] << ", ";
-				cout << tokens[types[types.length - 1]] << "  ";
+			if (parms.length > 0) {
+				for (int i = 0; i < (parms.length - 1); i++)
+					cout << tokens[parms[i].type] << ", ";
+				cout << tokens[parms[parms.length - 1].type] << "  ";
 			}
 			else cout << "None";
 			cout << "body:\n";
-			body->print(l + 1);
+			if (body.length > 0) {
+				for (int i = 0; i < body.length; i++)
+					body[i]->print(l + 1);
+			}
 		}
 	};
 
@@ -180,14 +192,13 @@ namespace simple {
 	public:
 		bool isext;
 		tokentype type;
-		list<string> id;
-		bool isarray;
+		list<var_dec> vars;
 		void print(int l) override {
 			pl(l);
 			cout << "ASTNode Type: Variable Declare, type: " << tokens[type]  << "id: ";
-				for (int i = 0; i < id.length - 1; i++)
-					cout << id[i] << ", ";
-			cout << id[id.length - 1] << "\n";
+				for (int i = 0; i < vars.length - 1; i++)
+					cout << vars[i].ident << ", ";
+			cout << vars[vars.length - 1].ident << "\n";
 		}
 	};
 
@@ -232,39 +243,32 @@ namespace simple {
 				tok = l.gettoken();
 				token_table.append(tok);
 			}
-			token eof;
-			eof.type = END;
-			token_table.append(eof); // Make sure EOF is properly recognized
+
+			token_table.append(tok); // Make sure EOF is properly recognized
+			cur_tok = token_table[0];
 		}
 	private:
-		struct parm_type {
-			bool isarray;
-			string ident;
-			tokentype type;
-		};
-		struct var_dec {
-			bool isarray;
-			int arraysize;
-			string ident;
-		};
+
 		tokentype type();
 		ast_node *prog();
-		ast_node *dcl();
-		ast_node *stmt();
 		ast_node *func();
+		ast_node *vardcl();
+		ast_node *stmt();
 		ast_node *assg();
 		ast_node *expr();
-		list<parm_type> &parm_types();
-		list<var_dec> &var_decl();
+		list<parm_type> parm_types();
+		var_dec var_decl();
 		
 		lexer l;
 		ast_node *root;
 		int cur_tokpos = 0;
 		token cur_tok;
-		int accept(tokentype tok) {
-			next();
+		bool istype();
+		token accept(tokentype tok) {
 			if (cur_tok.type == tok) {
+				token tmp = cur_tok;
 				next();
+				return tmp;
 			}
 			else {
 				unexpect();
@@ -277,10 +281,11 @@ namespace simple {
 			exit(-1);
 		}
 		void next() {
-			cur_tok = token_table[cur_tokpos++];
+			cur_tok = token_table[++cur_tokpos];
 		}
-		void unget(token tok) {
-			token_table[cur_tokpos--] = tok;
+		void unget() {
+			token_table[cur_tokpos--] = cur_tok;
+			cur_tok = token_table[cur_tokpos];
 		}
 	};
 
