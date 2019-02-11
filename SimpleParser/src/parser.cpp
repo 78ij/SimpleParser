@@ -142,46 +142,181 @@ namespace simple {
 		}
 	}
 	ast_node *parser::assg() {
-		string id = accept(IDENT).val;
+		ast_node_assg *ret = new ast_node_assg;
+		ret->id = accept(IDENT).val;
 		if (cur_tok.type = LB) {
-
+			ret->isarray = true;
+			ret->num = expr();
+			accept(RB);
 		}
 		accept(ASSIGN);
+		ret->right = expr();
+		return ret;
 	}
 	ast_node *parser::stmt() {
 		if (cur_tok.type == IF) {
 			next();
+			ast_node_if *ret = new ast_node_if;
 			accept(LP);
+			ast_node *cond = expr();
+			ret->cond = cond;
+			accept(RP);
+			ast_node *body = stmt();
+			ret->body = body;
+			if (cur_tok.type == ELSE) {
+				next();
+				ast_node *el = stmt();
+				ret->el = el;
+			}
 		}
 		else if (cur_tok.type == WHILE) {
 			next();
+			ast_node_while *ret = new ast_node_while;
 			accept(LP);
+			ret->cond = expr();
 			accept(RP);
+			ret->body = stmt();
+			return ret;
 		}
 		else if (cur_tok.type == FOR) {
 			next();
+			ast_node_for *ret = new ast_node_for;
 			accept(LP);
+			if (cur_tok.type != SEMI) {
+				ret->init = assg();
+			}
 			accept(SEMI);
+			if (cur_tok.type != SEMI) {
+				ret->cond = expr();
+			}
 			accept(SEMI);
+			if (cur_tok.type != RP) {
+				ret->iter = expr();
+			}
 			accept(RP);
+			ret->body = stmt();
+			return ret;
 		}
 		else if (cur_tok.type == RETURN) {
+			next();
+			ast_node_ret *ret = new ast_node_ret;
+			if (cur_tok.type != SEMI) {
+				ret->stmt = expr();
+			}
 			accept(SEMI);
+			return ret;
 		}
 
-		else if (cur_tok.type == CONTINUE || cur_tok.type == CONTINUE) {
+		else if (cur_tok.type == BREAK || cur_tok.type == CONTINUE) {
 			next();
 			ast_node_const *ret = new ast_node_const;
 			ret->tok = cur_tok;
 			accept(SEMI);
 			return ret;
 		}
+		else if (cur_tok.type == LC) {
+			next();
+			ast_node_bigbrac *ret = new ast_node_bigbrac;
+			ast_node *tmp;
+			if (cur_tok.type != RC) {
+				tmp = stmt();
+				ret->body.append(tmp);
+			}
+			accept(RC);
+			return ret;
+		}
+		else if (cur_tok.type = IDENT) {
+			token tok = cur_tok;
+			next();
+			accept(LP);
+			ast_node_callfunc *ret = new ast_node_callfunc;
+			ret->id = tok.val;
+			next();
+			if (cur_tok.type != RP) {
+				ast_node *tmp = expr();
+				while (cur_tok.type == COMMA) {
+					next();
+					ret->params.append(tmp);
+					tmp = expr();
+				}
+			}
+			accept(RP);
+			accept(SEMI);
+			return ret;
+		}
 		else if (cur_tok.type == SEMI) {
-
+			next();
+			return nullptr;
 		}
 	}
+
+	// Expression area
+
+	int getprec(token tok) {
+		if (tok.type == AND || tok.type == OR) return 1;
+		if (tok.type == EQ || tok.type == NEQ) return 2;
+		if (tok.type == LE || tok.type == LT || tok.type == GT || tok.type == GE) return 3;
+		if (tok.type == PLUS || tok.type == MINUS) return 4;
+		if (tok.type == MULTIPLY || tok.type == DIVIDE) return 5;
+		else return -1;
+	}
+
 	ast_node *parser::expr() {
-		return nullptr;
+		//Operator precedence Climbing
+		return parse_expr(expr_primary(), 0);
+	}
+
+	ast_node *parser::parse_expr(ast_node *lhs, int prec) {
+		while (true) {
+			int pre = getprec(cur_tok);
+			if (pre == -1 || pre < prec) break;
+			next();
+			ast_node *rhs = expr_primary();
+		}
+	}
+
+	ast_node *parser::expr_primary() {
+		if (cur_tok.type == LP) {
+			next();
+			ast_node_smbrac *ret = new ast_node_smbrac;
+			ret->inner = parse_expr(expr_primary(), 0);
+		}
+		if (cur_tok.type == CINT || cur_tok.type == CUINT
+			|| cur_tok.type == CLONG || cur_tok.type == CULONG
+			|| cur_tok.type == CCHAR || cur_tok.type == CDOUBLE
+			|| cur_tok.type == CFLOAT) {
+			ast_node_const *ret = new ast_node_const;
+			ret->tok = cur_tok;
+			next();
+			return ret;
+		}
+		
+		token tok = accept(IDENT);
+		if (cur_tok.type == LP) {
+			ast_node_callfunc *ret = new ast_node_callfunc;
+			ret->id = tok.val;
+			next();
+			if (cur_tok.type != RP) {
+				ast_node *tmp = expr();
+				while (cur_tok.type == COMMA) {
+					next();
+					ret->params.append(tmp);
+					tmp = expr();
+				}
+			}
+			accept(RP);
+			return ret;
+		}
+		else if (cur_tok.type == LB) {
+			ast_node_const *ret = new ast_node_const;
+			ret->tok = tok;
+			next();
+			ret->isarray = true;
+			ret->num = expr();
+			accept(RB);
+			return ret;
+		}
+		else unexpect();
 	}
 
 	list<parm_type> parser::parm_types() {

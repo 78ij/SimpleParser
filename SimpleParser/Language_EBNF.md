@@ -52,33 +52,23 @@ stmt		:= IF LP expr RP stmt [ELSE stmt]
 
 assg		:= IDENT [LB expr RB] ASSIGN expr
 
-expr		:= MINUS expr
+expr		:= cmp_expr {logical_op cmp_expr}
 
-​			| PLUS expr
+cmp_expr	:= arith_expr [relop arith_expr]
 
-​			| NOT expr
+arith_expr	:= term {PLUS term}
 
-​			| expr binop expr
+​			| term {MINUS term}
 
-​			| expr relop expr
+term		:= factor {MULTIPLY factor}
 
-​			| expr logical_op expr
+​			| factor  {DIVIDE factor}
 
-​			| IDENT [LP [expr { COMMA expr} ] RP | LB expr RB ]
+factor		:= IDENT [LP [expr { COMMA expr} ] RP | LB expr RB ]
+
+​			| CINT | CUINT | CLONG | CULONG | CCHAR | CDOUBLE | CFLOAT	
 
 ​			| LP expr RP
-
-​			| CINT
-
-​			 
-
-binop		:= PLUS
-
-​			| MINUS
-
-​			| MULTIPLY
-
-​			| DIVIDE
 
 relop		:= EQ
 

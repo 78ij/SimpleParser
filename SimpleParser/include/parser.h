@@ -45,6 +45,8 @@ namespace simple {
 	class ast_node_const : public ast_node {
 	public:
 		token tok;
+		bool isarray = false;
+		ast_node *num;
 		void print(int l) override {
 			pl(l);
 			cout << "ASTNode Type: Const  " << "Token Information: ";
@@ -52,6 +54,27 @@ namespace simple {
 		}
 	};
 
+	class ast_node_bigbrac : public ast_node {
+	public:
+		list<ast_node *> body;
+		void print(int l) override {
+			pl(l);
+			cout << "ASTNode Type: Big Bracket Childs:\n";
+			for (int i = 0; i < body.length; i++) {
+				body[i]->print(l + 1);
+			}
+		}
+	};
+
+	class ast_node_smbrac : public ast_node {
+	public:
+		ast_node *inner;
+		void print(int l) override {
+			pl(l);
+			cout << "ASTNode Type: Small Bracket Child:\n";
+			inner->print(l + 1);
+		}
+	};
 	class ast_node_if : public ast_node {
 	public:
 		ast_node *cond;
@@ -219,6 +242,8 @@ namespace simple {
 	class ast_node_assg : public ast_node {
 	public:
 		string id;
+		bool isarray = false;
+		ast_node *num;
 		ast_node *right;
 		void print(int l) override {
 			pl(l);
@@ -255,7 +280,12 @@ namespace simple {
 		ast_node *vardcl();
 		ast_node *stmt();
 		ast_node *assg();
+
 		ast_node *expr();
+		//Aux function of expression parsing
+		ast_node *expr_primary();
+		ast_node *parse_expr(ast_node *lhs,int prec);
+
 		list<parm_type> parm_types();
 		var_dec var_decl();
 		
