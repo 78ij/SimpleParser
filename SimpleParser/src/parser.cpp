@@ -144,7 +144,7 @@ namespace simple {
 	ast_node *parser::assg() {
 		ast_node_assg *ret = new ast_node_assg;
 		ret->id = accept(IDENT).val;
-		if (cur_tok.type = LB) {
+		if (cur_tok.type == LB) {
 			ret->isarray = true;
 			ret->num = expr();
 			accept(RB);
@@ -191,7 +191,7 @@ namespace simple {
 			}
 			accept(SEMI);
 			if (cur_tok.type != RP) {
-				ret->iter = expr();
+				ret->iter = assg();
 			}
 			accept(RP);
 			ret->body = stmt();
@@ -226,23 +226,33 @@ namespace simple {
 			return ret;
 		}
 		else if (cur_tok.type = IDENT) {
-			token tok = cur_tok;
 			next();
-			accept(LP);
-			ast_node_callfunc *ret = new ast_node_callfunc;
-			ret->id = tok.val;
-			next();
-			if (cur_tok.type != RP) {
-				ast_node *tmp = expr();
-				while (cur_tok.type == COMMA) {
-					next();
+			if (cur_tok.type == LP) {
+				unget();
+				token tok = cur_tok;
+				next();
+				accept(LP);
+				ast_node_callfunc *ret = new ast_node_callfunc;
+				ret->id = tok.val;
+				if (cur_tok.type != RP) {
+					ast_node *tmp = expr();
 					ret->params.append(tmp);
-					tmp = expr();
+					while (cur_tok.type == COMMA) {
+						next();
+						tmp = expr();
+						ret->params.append(tmp);
+					}
 				}
+				accept(RP);
+				accept(SEMI);
+				return ret;
 			}
-			accept(RP);
-			accept(SEMI);
-			return ret;
+			else {
+				unget();
+				ast_node *ret = assg();
+				accept(SEMI);
+				return ret;
+			}
 		}
 		else if (cur_tok.type == SEMI) {
 			next();
@@ -269,10 +279,22 @@ namespace simple {
 	ast_node *parser::parse_expr(ast_node *lhs, int prec) {
 		while (true) {
 			int pre = getprec(cur_tok);
+			token op = cur_tok;
 			if (pre == -1 || pre < prec) break;
 			next();
 			ast_node *rhs = expr_primary();
+			while (true) {
+				pre = getprec(cur_tok);
+				if (pre == -1 || pre >= prec) break;
+				rhs = parse_expr(rhs, pre);
+			}
+			ast_node_bin *ret = new ast_node_bin;
+			ret->type = op.type;
+			ret->left = lhs;
+			ret->right = rhs;
+			lhs = ret;
 		}
+		return lhs;
 	}
 
 	ast_node *parser::expr_primary() {
@@ -280,6 +302,8 @@ namespace simple {
 			next();
 			ast_node_smbrac *ret = new ast_node_smbrac;
 			ret->inner = parse_expr(expr_primary(), 0);
+			accept(RP);
+			return ret;
 		}
 		if (cur_tok.type == CINT || cur_tok.type == CUINT
 			|| cur_tok.type == CLONG || cur_tok.type == CULONG
@@ -298,10 +322,11 @@ namespace simple {
 			next();
 			if (cur_tok.type != RP) {
 				ast_node *tmp = expr();
+				ret->params.append(tmp);
 				while (cur_tok.type == COMMA) {
 					next();
-					ret->params.append(tmp);
 					tmp = expr();
+					ret->params.append(tmp);
 				}
 			}
 			accept(RP);
@@ -316,7 +341,11 @@ namespace simple {
 			accept(RB);
 			return ret;
 		}
-		else unexpect();
+		else {
+			ast_node_const *ret = new ast_node_const;
+			ret->tok = tok;
+			return ret;
+		}
 	}
 
 	list<parm_type> parser::parm_types() {

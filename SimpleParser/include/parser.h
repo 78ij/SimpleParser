@@ -166,7 +166,8 @@ namespace simple {
 		void print(int l) override {
 			pl(l);
 			cout << "ASTNode Type: Function Call\n";
-			for (int i = 1; i <= params.length; i++) {
+			for (int i = 0; i < params.length; i++) {
+				pl(l + 1);
 				cout << "Parameter " << i << " :\n";
 				params[i]->print(l + 1);
 			}
