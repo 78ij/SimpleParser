@@ -35,6 +35,7 @@ namespace simple {
 	token lexer::isspsymbol(char c) {
 		token tok;
 		tok.type = ERROR;
+		tok.val = 'd';
 		if (c == '!')
 			tok.type = NOT;
 		if (c == ',')
@@ -153,7 +154,7 @@ namespace simple {
 	token lexer::gettoken(){
 		enum lexerstate {
 			ERR, START, ID, DONE,INT_C,FLOAT_C, FLOAT_OR_INT, ZERO,HEX,OCTINT,E_FLOAT_C,D_FLOAT_C,
-			CHAR_C,CHARERR
+			CHAR_C,CHARERR, /*Man,i really dont want to add this*/ SLASHCOMMENT,ASTERISKCOMMENT,PREPROC
 		};
 		lexerstate state = START;
 		char c;
@@ -167,9 +168,27 @@ namespace simple {
 			}
 			switch (state) {
 			case START:
+				if (c == '/') {
+					tmp.push_back(c);
+					file.get(c);
+					if (c == '/') {
+						tmp.push_back(c);
+						state = SLASHCOMMENT;
+						break;
+					}
+					else if (c == '*') {
+						tmp.push_back(c);
+						state = ASTERISKCOMMENT;
+						break;
+					}
+					else {
+						file.unget();
+						c = '/';
+					}
+				}
 				tok = isspsymbol(c);
 				tok.row = row;
-				tok.col = col - 1;
+				tok.col = col;
 				if (tok.type != ERROR) return tok;
 				if (isspace(c)) continue;
 				else if (isalpha(c)) {
@@ -192,10 +211,59 @@ namespace simple {
 					tmp.push_back(c);
 					state = CHAR_C;
 				}
+				else if (c == '#') {
+					if (col == 1) {
+						state = PREPROC;
+						tmp.push_back(c);
+					}
+					else {
+						state = ERR;
+						tmp.push_back(c);
+					}
+				}
 				else {
 					state = ERR;
 					tmp.push_back(c);
 				}
+				break;
+			case PREPROC:
+				if (c == '\n') {
+					state = DONE;
+					tok.type = COM; // Handle PreProc as comments(temp)
+					tok.val = tmp;
+					file.unget();
+					row--;
+					col = source[row - 1].size() - 1;
+				}
+				else
+					tmp.push_back(c);
+				break;
+			case SLASHCOMMENT:
+				if (c == '\n') {
+					state = DONE;
+					tok.type = COM;
+					tok.val = tmp;
+					file.unget();
+					row--;
+					col = source[row - 1].size() - 1;
+				}
+				else
+					tmp.push_back(c);
+				break;
+			case ASTERISKCOMMENT:
+				if (c == '*') {
+					file.get(c);
+					if (c == '/') {
+						tmp += "*/ ";
+						state = DONE;
+						tok.type = COM;
+						tok.val = tmp;
+						break;
+					}
+					file.unget();
+				}
+				else
+					tmp.push_back(c);
 				break;
 			case ID:
 				if (!(isalnum(c))) {
@@ -411,6 +479,7 @@ namespace simple {
 						row--;
 						col = source[row - 1].size() - 1;
 					}
+					col--;
 					file.unget();
 					state = INT_C;
 				}
@@ -551,14 +620,20 @@ namespace simple {
 					if (tok.val == "unsigned") tok.type = UNSIGNED;
 					if (tok.val == "void") tok.type = VOID;
 				}
-				col--;
-				tok.row = row;
-				tok.col = col;
-				file.unget();
+
+				
 				if (c == '\n') {
 					row--;
-					col = source[row - 1].size() - 1;
+					col = source[row - 1].size();
+					tok.col = col - tok.val.size() + 1;
 				}
+				else {
+					col--;
+					tok.col = col - tok.val.size() + 1;
+				}
+				tok.row = row;
+				file.unget();
+				
 				return tok;
 				break;
 			case ERR:

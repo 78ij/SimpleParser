@@ -6,31 +6,48 @@ namespace simple {
 		ifstream fin(path);
 		ofstream fout(path + ".pre.nocomment");
 		size_t tmp = 0;
+		string s;
 		int row = 1;
 		while (getline(fin, current)) {
+			s = current;
 			//handle comments
-			if (current.find("/*") != current.npos) {
-				if (current.find("/*") != current.npos) {
-					state = COMMENT;
+			//if (current.find("/*") != current.npos) {
+			//	if (current.find("/*") != current.npos) {
+			//		state = COMMENT;
+			//	}
+			//	tmp = current.find("/*");
+			//	fout << current.substr(0, tmp) << endl;
+			//}
+			//if (current.find("*/") != current.npos) {
+			//	state = NORMAL;
+			//	tmp = current.find_last_of("*/");
+			//	
+			//	continue;
+			//}
+			//if (current.find("//") != current.npos) {
+			//	tmp = current.find("//");
+			//	fout << current.substr(0, tmp) << endl;
+			//	continue;
+			//}
+			if (s.find("//") != s.npos) {
+				tmp = s.find("//");
+				s = s.substr(0,tmp);
+			}
+			if (s.find("/*") != s.npos) {
+				tmp = s.find("/*");
+				if (s.rfind("*/") != s.npos) {
+					int tmp2 = s.rfind("*/");
+					s = s.substr(0, tmp) + s.substr(tmp2 + 2);
+					fout << s << endl;
+					continue;
 				}
-				tmp = current.find("/*");
-				fout << current.substr(0, tmp) << endl;
-				continue;
-			}
-			if (current.find("*/") != current.npos) {
-				state = NORMAL;
-				tmp = current.find_last_of("*/");
-				continue;
-			}
-			if (current.find("//") != current.npos) {
-				tmp = current.find("//");
-				fout << current.substr(0, tmp) << endl;
-				continue;
+				s = s.substr(0, tmp);
+				state = COMMENT;
 			}
 			if (state == COMMENT) {
 				continue;
 			}
-			fout << current << endl;
+			fout << s << endl;
 			row++;
 		}
 		return true;

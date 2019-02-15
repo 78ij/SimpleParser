@@ -46,6 +46,12 @@ namespace simple {
 				*(data[i]) = other[i];
 			}
 		}
+		void clear() {
+			for (int i = 0; i < length; i++) {
+				delete (data[i]);
+			}
+			length = 0;
+		}
 		list &operator=(const list &other) {
 			data = (T **)malloc(other.size * sizeof(T*));
 			size = other.size;

@@ -8,6 +8,12 @@
 #include "include/error.h"
 #include "include/list.h"
 
+
+// Due to a stupid thought of mine, two sets of preprocessing are implemented:
+// Handled in the preprocessor (behave like a real compiler)
+// Or handled in the lexer (Result in comment property in the AST)
+// The latter is compatible with the main purpose of the program (formatting the code)
+
 using std::string;
 using std::istringstream;
 using std::ostringstream;

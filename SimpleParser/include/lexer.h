@@ -25,6 +25,9 @@ using std::isalnum;
 using std::isdigit;
 using std::ifstream;
 using std::stringstream;
+using std::ostream;
+using std::ofstream;
+using std::tolower;
 
 namespace simple {
 	const string keywords[] = {
@@ -38,18 +41,19 @@ namespace simple {
 		SHORT, LONG, INT, CHAR, FLOAT, DOUBLE,UINT,ULONG,USHORT,UCHAR,
 		CUINT, CINT, CLONG, CULONG, CCHAR, CDOUBLE, CFLOAT, VOID,
 		LP, RP, LB, RB, LC, RC, COMMA,
-		LT, GT, LE, GE, EQ, NEQ, OR, AND, ASSIGN, NOT,
-		SEMI, IF, ELSE, WHILE, FOR, RETURN, BREAK, CONTINUE, EXTERN, UNSIGNED,
-		PLUS, MINUS, MULTIPLY, DIVIDE, MOD
+		LT, GT, LE, GE, EQ, NEQ, OR, AND, ASSIGN,NOT, PLUS, MINUS, MULTIPLY, DIVIDE, MOD,
+		SEMI, IF, ELSE, WHILE, FOR, RETURN, BREAK, CONTINUE, EXTERN, UNSIGNED,COM,PREP
+
 	};
 	// Unsupported: const string, ++,-- and lots of other things.
 	const string tokens[] = {
 		"ERROR", "END", "IDENT", "SHORT", "LONG", "INT", "CHAR", "FLOAT", "DOUBLE","UINT","ULONG","USHORT","UCHAR",
 		"CUINT", "CINT", "CLONG", "CULONG", "CCHAR", "CDOUBLE", "CFLOAT", "VOID",
 		"LP", "RP", "LB", "RB", "LC", "RC", "COMMA",
-		"LT", "GT", "LE", "GE", "EQ", "NEQ", "OR", "AND", "ASSIGN", "NOT",
-		"SEMI", "IF", "ELSE", "WHILE", "FOR", "RETURN", "BREAK", "CONTINUE", "EXTERN", "UNSIGNED",
-		"PLUS", "MINUS", "MULTIPLY", "DIVIDE", "MOD"
+		"LT", "GT", "LE", "GE", "EQ", "NEQ", "OR", "AND", "ASSIGN","NOT","PLUS", "MINUS", "MULTIPLY", "DIVIDE", "MOD",
+		"SEMI", "IF", "ELSE", "WHILE", "FOR", "RETURN", "BREAK", "CONTINUE", "EXTERN", "UNSIGNED","COMMENT","PREPROC",
+		//Hardcoded junks
+		"<",">","<=",">=","==","!=","||","&&","=","!","+","-","*","/","%"
 	};
 
 	struct token {
@@ -67,7 +71,7 @@ namespace simple {
 			color(270);
 			cout << "Token Type: " << tokens[type] << "   ";
 			color(11);
-			cout << "String: " << val << "\t";
+			cout << "String: " << val << " ";
 			color(13);
 			switch (type) {
 			case CLONG:
@@ -86,6 +90,8 @@ namespace simple {
 				break;
 			}
 			color(263);
+			cout << " row: " << row;
+			cout << " col: " << col;
 			cout << endl;
 		}
 		void convert();
@@ -100,7 +106,15 @@ namespace simple {
 				source.append(tmp);
 			}
 			file.clear();
+			file.seekg(-1,std::ios_base::end);
+			char c;
+			file.get(c);
 			file.close();
+			ofstream o;
+			o.open(_path, std::ios::app);
+			if(c != '\n')
+				o << "\n";
+			o.close();
 			file = ifstream(_path);
 		}
 		token gettoken();

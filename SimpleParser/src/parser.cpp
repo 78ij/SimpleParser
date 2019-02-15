@@ -98,53 +98,46 @@ namespace simple {
 		tokentype t = type();
 		string id = accept(IDENT).val;
 		accept(LP);
-		if (cur_tok.type == RP) {
+		list<parm_type> lp = parm_types();
+		accept(RP);
+		if (cur_tok.type == LC) {
 			next();
-			ast_node_funcdec *ret = new ast_node_funcdec;
+			ast_node_funcdef * ret = new ast_node_funcdef;
+			ast_node *tmp = new ast_node;
 			ret->id = id;
-			ret->type = t;
+			ret->ret = t;
+			ret->parms = lp;
+			while (tmp) {
+				if (cur_tok.type == RC) break;
+				if (istype()) {
+					tmp = new ast_node;
+					tmp = vardcl();
+					ret->body.append(tmp);
+					accept(SEMI);
+				}
+				else {
+					tmp = stmt();
+					ret->body.append(tmp);
+				}
+			}
+			accept(RC);
 			return ret;
 		}
 		else {
-			list<parm_type> lp = parm_types();
-			accept(RP);
-			if (cur_tok.type == LC) {
-				next();
-				ast_node_funcdef * ret = new ast_node_funcdef;
-				ast_node *tmp = new ast_node;
-				ret->id = id;
-				ret->ret = t;
-				ret->parms = lp;
-				while (tmp) {
-					if (cur_tok.type == RC) break;
-					if (istype()) {
-						tmp = new ast_node;
-						tmp = vardcl();
-						ret->body.append(tmp);
-						accept(SEMI);
-					}
-					else {
-						tmp = stmt();
-						ret->body.append(tmp);
-					}
-				}
-				accept(RC);
-				return ret;
-			}
-			else {
-				ast_node_funcdec *ret = new ast_node_funcdec;
-				ret->id = id;
-				ret->type = t;
-				ret->parms = lp;
-				accept(SEMI);
-				return ret;
-			}
+			ast_node_funcdec *ret = new ast_node_funcdec;
+			ret->id = id;
+			ret->type = t;
+			ret->parms = lp;
+			accept(SEMI);
+			return ret;
+
 		}
 	}
-	ast_node *parser::assg() {
+	ast_node_assg *parser::assg() {
 		ast_node_assg *ret = new ast_node_assg;
 		ret->id = accept(IDENT).val;
 		if (cur_tok.type == LB) {
+			next();
 			ret->isarray = true;
 			ret->num = expr();
 			accept(RB);
@@ -168,6 +161,7 @@ namespace simple {
 				ast_node *el = stmt();
 				ret->el = el;
 			}
+			return ret;
 		}
 		else if (cur_tok.type == WHILE) {
 			next();
@@ -208,9 +202,9 @@ namespace simple {
 		}
 
 		else if (cur_tok.type == BREAK || cur_tok.type == CONTINUE) {
-			next();
 			ast_node_const *ret = new ast_node_const;
 			ret->tok = cur_tok;
+			next();
 			accept(SEMI);
 			return ret;
 		}
@@ -218,14 +212,14 @@ namespace simple {
 			next();
 			ast_node_bigbrac *ret = new ast_node_bigbrac;
 			ast_node *tmp;
-			if (cur_tok.type != RC) {
+			while (cur_tok.type != RC) {
 				tmp = stmt();
 				ret->body.append(tmp);
 			}
 			accept(RC);
 			return ret;
 		}
-		else if (cur_tok.type = IDENT) {
+		else if (cur_tok.type == IDENT) {
 			next();
 			if (cur_tok.type == LP) {
 				unget();
@@ -234,6 +228,7 @@ namespace simple {
 				accept(LP);
 				ast_node_callfunc *ret = new ast_node_callfunc;
 				ret->id = tok.val;
+				ret->isstmt = true;
 				if (cur_tok.type != RP) {
 					ast_node *tmp = expr();
 					ret->params.append(tmp);
@@ -249,14 +244,20 @@ namespace simple {
 			}
 			else {
 				unget();
-				ast_node *ret = assg();
+				ast_node_assg *ret = assg();
 				accept(SEMI);
+				ret->isstmt = true;
 				return ret;
 			}
 		}
 		else if (cur_tok.type == SEMI) {
+			ast_node_const *ret = new ast_node_const;
+			ret->tok = cur_tok;
 			next();
-			return nullptr;
+			return ret;
+		}
+		else {
+			unexpect();
 		}
 	}
 
@@ -285,7 +286,7 @@ namespace simple {
 			ast_node *rhs = expr_primary();
 			while (true) {
 				pre = getprec(cur_tok);
-				if (pre == -1 || pre >= prec) break;
+				if (pre == -1 || pre <= prec) break;
 				rhs = parse_expr(rhs, pre);
 			}
 			ast_node_bin *ret = new ast_node_bin;
@@ -351,6 +352,9 @@ namespace simple {
 	list<parm_type> parser::parm_types() {
 		list<parm_type> ret;
 		tokentype t = type();
+		if (t == VOID) {
+			return ret;
+		}
 		string id = accept(IDENT).val;
 		bool isarray = false;
 		if (cur_tok.type == LB) {
@@ -385,15 +389,75 @@ namespace simple {
 		if (cur_tok.type == LB) {
 			next();
 			ret.isarray = true;
+			cur_tok.convert();
 			ret.arraysize = accept(CINT).icval;
 			accept(RB);
 		}
 		return ret;
 	}
-	void parser::parse() {
-		root = prog();
+
+	void parser::format() {
+		ofstream fout(path + ".tmp");
+		root->format(0, fout);
+		fout.close();
+		ifstream fin(path + ".tmp");
+		list<string> fmtsrc;
+		string tmp;
+		while (getline(fin, tmp)) {
+			fmtsrc.append(tmp);
+		}
+		lexer lt(path + ".tmp");
+		token tok;
+		list<token> token_table_fmt;
+		while (tok.type != tokentype::END) {
+			tok = lt.gettoken();
+			token_table_fmt.append(tok);
+		}
+		int i = token_table_comments.length - 1;
+		int j = token_table_fmt.length - 1;
+		list<token> com_tmp;
+		for (int i = 0; i < token_table_fmt.length; i++) {
+			token_table_fmt[i].print();
+
+		}
+		while (i >= 0 && j >= 0) {
+			if (token_table_comments[i].type != COM) {
+				i--;
+				j--;
+			}
+			else {
+				while (token_table_comments[i].type == COM) {
+					com_tmp.append(token_table_comments[i--]);
+				}
+				token tok = token_table_fmt[j];
+				int col = tok.col + tok.val.size() - 1;
+				int row = tok.row;
+				for (int i = 0; i < com_tmp.length; i++) {
+					fmtsrc[row - 1].insert(col, " " + com_tmp[i].val);
+					col += com_tmp[i].val.size();
+				}
+				com_tmp.clear();
+			}
+		}
+		if (i != -1) {
+			while (i >= 0) {
+				fmtsrc[0].insert(0, token_table_comments[i--].val + '\n');
+			}
+		}
+		color(2);
+		cout << "Source:-------------------------\n\n";
+		for (int i = 0; i < l.source.length; i++) {
+			cout << l.source[i] << "\n";
+		}
+		color(6);
+		cout << "\n";
+		cout << "Formatted:----------------------\n\n";
+		for (int i = 0; i < fmtsrc.length; i++) {
+			cout << fmtsrc[i] << "\n";
+		}
+		color(263);
 	}
-	
+
 	void parser::test() {
 		
 	}

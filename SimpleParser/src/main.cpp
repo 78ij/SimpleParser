@@ -11,12 +11,12 @@ using simple::parser;
 
 int main() {
 	list<token> toklist;
-	preproc p("sample.txt");
+	/*preproc p("sample.txt");
 	if (!(p.proc())) {
 		system("pause");
 		return 0;
-	}
-	lexer lex("sample.txt.pre.nodefine");
+	}*/
+	lexer lex("sample.txt");
 	token tok = lex.gettoken();
 	int row = 0;
 	toklist.append(tok);
@@ -49,6 +49,10 @@ int main() {
 	cout << "\n\n";
 	parser pa("sample.txt");
 	pa.parse();
+	cout << "--------------------------------------------------------" << endl;
+
 	pa.print();
+	cout << "--------------------------------------------------------" << endl;
+	pa.format();
 	system("pause");
 }

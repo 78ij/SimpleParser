@@ -6,9 +6,16 @@
 
 namespace simple {
 	
-	inline void pl(int l) {
-		for (int i = 0; i < l; i++)
-			cout << '\t';
+	inline string mytolower(string s) {
+		string ret;
+		for (auto c : s)
+			ret.push_back(tolower(c));
+		return ret;
+	}
+
+	inline void pl(int l,ostream &out = cout) {
+		for (int i = 0; i < l * 4; i++)
+			out << ' ';
 	}
 
 	struct parm_type {
@@ -26,6 +33,7 @@ namespace simple {
 	class ast_node {
 	public:
 		virtual void print(int l) {}
+		virtual void format(int l,ostream &out) {}
 	};
 
 	class ast_node_prog :public ast_node{
@@ -38,6 +46,12 @@ namespace simple {
 				lst[i]->print(l + 1);
 			}
 			cout << "\n";
+		}
+		void format(int l,ostream &out) override {
+			pl(l,out);
+			for (int i = 0; i < lst.length; i++) {
+				lst[i]->format(l,out);
+			}
 		}
 	};
 
@@ -52,6 +66,22 @@ namespace simple {
 			cout << "ASTNode Type: Const  " << "Token Information: ";
 			tok.print();
 		}
+		void format(int l, ostream &out) override {
+			if (tok.type == BREAK) {
+				pl(l, out);
+				out << "break;\n";
+			}
+			else if (tok.type == CONTINUE){
+				pl(l, out);
+				out << "continue;\n";
+			}
+			else if (tok.type == SEMI) {
+				pl(l, out);
+				out << ";\n";
+			}
+			else
+				out << tok.val << " ";
+		}
 	};
 
 	class ast_node_bigbrac : public ast_node {
@@ -64,6 +94,15 @@ namespace simple {
 				body[i]->print(l + 1);
 			}
 		}
+		void format(int l,ostream &out) override {
+			pl(l - 1, out);
+			out << "{\n";
+			for (int i = 0; i < body.length; i++) {
+				body[i]->format(l,out);
+			}
+			pl(l - 1, out);
+			out << "}\n";
+		}
 	};
 
 	class ast_node_smbrac : public ast_node {
@@ -74,6 +113,11 @@ namespace simple {
 			cout << "ASTNode Type: Small Bracket Child:\n";
 			inner->print(l + 1);
 		}
+		void format(int l,ostream &out) override {
+			out << "( ";
+			inner->format(l + 1,out);
+			out << ") ";
+		}
 	};
 	class ast_node_if : public ast_node {
 	public:
@@ -83,15 +127,30 @@ namespace simple {
 		void print(int l) override {
 			pl(l);
 			cout << "ASTNode Type: If\n";
+			pl(l);
 			cout << "Condition:\n";
 			cond->print(l + 1);
+			pl(l);
 			cout << "Body:\n";
 			body->print(l + 1);
 			if (el != nullptr) {
+				pl(l);
 				cout << "Else:\n";
 				el->print(l + 1);
 			}
-			cout << "\n";
+		}
+		void format(int l, ostream &out) override {
+			pl(l, out);
+			out << "if( ";
+			cond->format(l + 1,out);
+			out << ") \n";
+			body->format(l + 1,out);
+			if (el != nullptr) {
+				pl(l, out);
+				out << "else\n";
+				el->format(l + 1,out);
+			}
+			
 		}
 	};
 
@@ -102,12 +161,19 @@ namespace simple {
 		void print(int l) override {
 			pl(l);
 			cout << "ASTNode Type: While\n";
+			pl(l);
 			cout << "Condition:\n";
 			cond->print(l  + 1);
+			pl(l);
 			cout << "body:\n";
 			body->print(l + 1);
-			cout << "\n";
-
+		}
+		void format(int l, ostream &out) override {
+			pl(l, out);
+			out << "while( ";
+			cond->format(l + 1,out);
+			out << ") \n";
+			body->format(l + 1,out);
 		}
 	};
 
@@ -121,21 +187,40 @@ namespace simple {
 			pl(l);
 			cout << "ASTNode Type: For\n";
 			if (init != nullptr) {
+				pl(l);
 				cout << "Init:\n";
 				init->print(l + 1);
 			}
 			if (cond != nullptr) {
+				pl(l);
 				cout << "Cond:\n";
 				cond->print(l + 1);
 			}
 			if (iter != nullptr) {
+				pl(l);
 				cout << "Iter\n";
 				iter->print(l + 1);
 			}
+			pl(l);
 			cout << "Body:\n";
 			body->print(l + 1);
-			cout << "\n";
-
+		}
+		void format(int l, ostream &out) override {
+			pl(l, out);
+			out << "for( ";
+			if (init != nullptr) {
+				init->format(l + 1,out);
+			}
+			out << "; ";
+			if (cond != nullptr) {
+				cond->format(l + 1,out);
+			}
+			out << "; ";
+			if (iter != nullptr) {
+				iter->format(l + 1,out);
+			}
+			out << ")\n ";
+			body->format(l + 1,out);
 		}
 	};
 
@@ -145,23 +230,31 @@ namespace simple {
 		void print(int l) override {
 			pl(l);
 			cout << "ASTNode Type: Return\n";
+			pl(l);
 			cout << "Statement:\n";
 			stmt->print(l + 1);
 		}
+		void format(int l, ostream &out) {
+			pl(l, out);
+			out << "return ";
+			stmt->format(l + 1,out);
+			out << "; \n";
+		}
 	};
 
-	class ast_node_parstmt : public ast_node {
-		ast_node *stmt;
-		void print(int l) override {
-			pl(l);
-			cout << "ASTNode Type: Parentheses Statement Statement:\n";
-			stmt->print(l + 1);
-		}
-    };
+	//class ast_node_parstmt : public ast_node {
+	//	ast_node *stmt;
+	//	void print(int l) override {
+	//		pl(l);
+	//		cout << "ASTNode Type: Parentheses Statement :\n";
+	//		stmt->print(l + 1);
+	//	}
+ //   };
 
 	class ast_node_callfunc : public ast_node {
 	public:
 		string id;
+		bool isstmt = false;
 		list<ast_node *> params;
 		void print(int l) override {
 			pl(l);
@@ -173,6 +266,27 @@ namespace simple {
 			}
 			cout << "\n";
 		}
+		void format(int l, ostream &out) {
+			if (isstmt) {
+				pl(l, out);
+				out << id << "( ";
+				for (int i = 0; i < params.length - 1; i++) {
+					params[i]->format(l + 1,out);
+					out << ",";
+				}
+				params[params.length - 1]->format(l + 1,out);
+				out << ");\n";
+			}
+			else {
+				out << id << "( ";
+				for (int i = 0; i < params.length - 1; i++) {
+					params[i]->format(l + 1,out);
+					out << ",";
+				}
+				params[params.length - 1]->format(l + 1,out);
+				out << ") ";
+			}
+		}
 	};
 
 	class ast_node_funcdec : public ast_node {
@@ -182,10 +296,32 @@ namespace simple {
 		list<parm_type> parms;
 		void print(int l) override {
 			pl(l);
-			cout << "ASTNode Type: Function Declare, id: " << id << "Returns: " << tokens[type] << "Types: ";
+			cout << "ASTNode Type: Function Declare, id: " << id << "Returns: " << tokens[type] << " Types: ";
 			for (int i = 0; i < parms.length - 1; i++)
 				cout << tokens[parms[i].type] << ", ";
 			cout << tokens[parms[parms.length - 1].type] << "\n";
+		}
+		void format(int l, ostream &out) override {
+			pl(l, out);
+			out << id << "( ";
+			if (parms.length == 0) out << "void";
+			if (parms.length > 0) {
+				for (int i = 0; i < parms.length - 1; i++) {
+					out << mytolower(tokens[parms[i].type]) << " ";
+					out << parms[i].ident;
+					if (parms[i].isarray) {
+						cout << "[] ";
+					}
+					out << ",";
+				}
+				out << mytolower(tokens[parms[parms.length - 1].type]) << " ";
+				out << parms[parms.length - 1].ident;
+				if (parms[parms.length - 1].isarray) {
+					out << "[] ";
+				}
+			}
+
+			out << ");\n";
 		}
 	};
 
@@ -210,6 +346,33 @@ namespace simple {
 					body[i]->print(l + 1);
 			}
 		}
+		void format(int l, ostream &out) override {
+			pl(l, out);
+			out << mytolower(tokens[ret]) << " ";
+			out << id << "( ";
+			if (parms.length == 0) out << "void";
+			if (parms.length > 0) {
+				for (int i = 0; i < parms.length - 1; i++) {
+					out << mytolower(tokens[parms[i].type]) << " ";
+					out << parms[i].ident;
+					if (parms[i].isarray) {
+						out << "[] ";
+					}
+					out << ",";
+				}
+				out << mytolower(tokens[parms[parms.length - 1].type]) << " ";
+				out << parms[parms.length - 1].ident;
+				if (parms[parms.length - 1].isarray) {
+					out << "[] ";
+				}
+			}
+			out << " )";
+			out << "\n{\n";
+			for (int i = 0; i < body.length; i++) {
+				body[i]->format(l + 1,out);
+			}
+			out << "}\n";
+		}
 	};
 
 	class ast_node_vardec : public ast_node {
@@ -219,10 +382,31 @@ namespace simple {
 		list<var_dec> vars;
 		void print(int l) override {
 			pl(l);
-			cout << "ASTNode Type: Variable Declare, type: " << tokens[type]  << "id: ";
+			cout << "ASTNode Type: Variable Declare, type: " << tokens[type]  << " id: ";
 				for (int i = 0; i < vars.length - 1; i++)
 					cout << vars[i].ident << ", ";
 			cout << vars[vars.length - 1].ident << "\n";
+		}
+		void format(int l, ostream &out) override {
+			pl(l, out);
+			if (isext) out << "extern ";
+			out << mytolower(tokens[type]) << " ";
+			for (int i = 0; i < vars.length - 1; i++) {
+				out << vars[i].ident;
+				if (vars[i].isarray) {
+					out << "[ ";
+					out << vars[i].arraysize;
+					out << " ] ";
+				}
+				out << ", ";
+			}
+			out << vars[vars.length - 1].ident;
+			if (vars[vars.length - 1].isarray) {
+				out << "[ ";
+				out << vars[vars.length - 1].arraysize;
+				out << " ] ";
+			}
+			out << ";\n";
 		}
 	};
 
@@ -233,45 +417,80 @@ namespace simple {
 		ast_node *right;
 		void print(int l) override {
 			pl(l);
-			cout << "ASTNode Type: Binary Operation, type:" << tokens[type] << "left:\n";
+			cout << "ASTNode Type: Binary Operation, type:" << tokens[type] << "\n";
+			pl(l);
+			cout <<	"left:\n";
 			left->print(l + 1);
+			pl(l);
 			cout << "right:\n";
 			right->print(l + 1);
+		}
+		void format(int l, ostream &out) override {
+			left->format(l + 1,out);
+			out << tokens[type + 27] << " ";
+			right->format(l + 1,out);
 		}
 	};
 
 	class ast_node_assg : public ast_node {
 	public:
 		string id;
+		bool isstmt = false;
 		bool isarray = false;
 		ast_node *num;
 		ast_node *right;
 		void print(int l) override {
 			pl(l);
-			cout << "ASTNode Type: Assignment, id: " << id << "right:\n";
+			cout << "ASTNode Type: Assignment, id: " << id << " right:\n";
 			right->print(l + 1);
+		}
+		void format(int l, ostream &out) override {
+			if(isstmt)
+				pl(l, out);
+			out << id;
+			if (isarray) {
+				out << "[ ";
+				num->format(l + 1,out);
+				out << "] ";
+			}
+			out << " = ";
+			right->format(l + 1,out);
+			if (isstmt) {
+				out << ";\n";
+			}
 		}
 	};
 
 	class parser {
 	public:
-		void parse();
+		void parse() {
+			root = prog();
+		}
+		void format();
 		void print() {
 			root->print(0);
 		}
 		void test();
 		string path;
 		list<token> token_table;
+		list<token> token_table_comments;
 		parser(string _path) : path(_path), l(_path){
 			token tok = l.gettoken();
-			token_table.append(tok);
+			token_table_comments.append(tok);
 			while (tok.type != tokentype::END) {
 				tok = l.gettoken();
-				token_table.append(tok);
+				token_table_comments.append(tok);
 			}
 
-			token_table.append(tok); // Make sure EOF is properly recognized
+			//token_table_comments.append(tok); // Make sure EOF is properly recognized
+			//Comments are taken out
+			token tmp;
+			for (int i = 0; i < token_table_comments.length;i++) {
+				tmp = token_table_comments[i];
+				if (tmp.type != COM) token_table.append(tmp);
+			}
 			cur_tok = token_table[0];
+
 		}
 	private:
 
@@ -280,7 +499,7 @@ namespace simple {
 		ast_node *func();
 		ast_node *vardcl();
 		ast_node *stmt();
-		ast_node *assg();
+		ast_node_assg *assg();
 
 		ast_node *expr();
 		//Aux function of expression parsing
