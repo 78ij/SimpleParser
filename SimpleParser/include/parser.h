@@ -219,7 +219,7 @@ namespace simple {
 			if (iter != nullptr) {
 				iter->format(l + 1,out);
 			}
-			out << ")\n ";
+			out << ")\n";
 			body->format(l + 1,out);
 		}
 	};
