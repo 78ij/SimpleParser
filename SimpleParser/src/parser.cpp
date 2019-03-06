@@ -364,11 +364,12 @@ namespace simple {
 			accept(RB);
 			return ret;
 		}
-		else {
+		else if(cur_tok.type != ERROR){
 			ast_node_const *ret = new ast_node_const;
 			ret->tok = tok;
 			return ret;
 		}
+		else unexpect();
 	}
 
 	list<parm_type> parser::parm_types() {
@@ -442,6 +443,15 @@ namespace simple {
 		//	token_table_fmt[i].print();
 
 		//}
+		//for (int i = token_table_comments.length - 1; i >= 1; i--) {
+		//	token t = token_table_comments[i];
+		//	token t1 = token_table_comments[i - 1];
+		//	if (t.type == COM && t.row != t1.row) {
+		//		for (int j = t.row; j > t1.row; j--) {
+		//			token_table_comments[i].val.insert('0', "\n");
+		//		}
+		//	}
+		//}
 		while (i >= 0 && j >= 0) {
 			if (token_table_comments[i].type != COM) {
 				i--;
@@ -449,6 +459,8 @@ namespace simple {
 			}
 			else {
 				while (token_table_comments[i].type == COM) {
+					if (token_table_comments[i].row != token_table_comments[i - 1].row)
+						token_table_comments[i].val.insert(0, "\n");
 					com_tmp.append(token_table_comments[i--]);
 				}
 				token tok = token_table_fmt[j];

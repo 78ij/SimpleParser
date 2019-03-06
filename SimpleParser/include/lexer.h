@@ -9,7 +9,6 @@
 #include <include/list.h>
 #include <include/error.h>
 
-
 using std::cin;
 using std::getline;
 using std::cout;

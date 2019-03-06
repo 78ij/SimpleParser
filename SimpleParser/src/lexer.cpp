@@ -1,11 +1,12 @@
 #include "include/lexer.h"
 
 namespace simple {
+	// Convert the literal values from string to value. 
 	void token::convert() {
 		switch (type) {
 		case CLONG:
 		case CINT:
-			if (val[0] == '0') {
+			if (val[0] == '0' && val[1] != 'x') {
 				if (val.find('9') != val.npos || val.find('8') != val.npos) {
 					type = ERROR;
 					break;
@@ -32,6 +33,7 @@ namespace simple {
 			break;
 		}
 	}
+	//Determine whether the char is a special symbol.
 	token lexer::isspsymbol(char c) {
 		token tok;
 		tok.type = ERROR;
@@ -149,6 +151,7 @@ namespace simple {
 		else if (tok.val == "") tok.val = c;
 		return tok;
 	}
+	// MASSIVE STATE MACHINE!!!!!!
 	token lexer::gettoken(){
 		enum lexerstate {
 			ERR, START, ID, DONE,INT_C,FLOAT_C, FLOAT_OR_INT, ZERO,HEX,OCTINT,E_FLOAT_C,D_FLOAT_C,
@@ -257,6 +260,7 @@ namespace simple {
 					file.get(c);
 					if (c == '/') {
 						tmp += "*/ ";
+
 						state = DONE;
 						tok.type = COM;
 						tok.val = tmp;
@@ -439,7 +443,7 @@ namespace simple {
 					state = E_FLOAT_C;
 				}
 				else if (c == 'l' || c == 'L') {
-					tok.type = CULONG;
+					tok.type = CLONG;
 					state = DONE;
 					tok.val = tmp;
 
@@ -449,6 +453,7 @@ namespace simple {
 						char t;
 						file.get(t);
 						if (t == 'l' || t == 'L') {
+							col += 1;
 							tok.type = CULONG;
 						}
 						else {
@@ -457,9 +462,11 @@ namespace simple {
 						}
 						file.get();
 					}
-					else tok.type = CINT;
+					else {
+						tok.type = CINT;
+						col--;
+					}
 					state = DONE;
-					col--;
 					tok.val = tmp;
 					file.unget();
 					if (c == '\n') {
@@ -478,6 +485,7 @@ namespace simple {
 						file.get(tmp);
 						if (tmp == 'l' || tmp == 'L') {
 							tok.type = CULONG;
+							col += 1;
 						}
 						else {
 							file.unget();
@@ -485,9 +493,11 @@ namespace simple {
 						}
 						file.get();
 					}
-					else tok.type = CINT;
+					else {
+						tok.type = CINT;
+						col--;
+					}
 					state = DONE;
-					col--;
 					tok.val = tmp;
 					file.unget();
 					if (c == '\n') {
@@ -637,14 +647,15 @@ namespace simple {
 						file.get(t);
 						if (t == 'l' || t == 'L') {
 							tok.type = CULONG;
+							col += 1;
 						}
 						else {
 							file.unget();
 							tok.type = CUINT;
+
 						}
 						file.get();
 						state = DONE;
-						col--;
 						tok.val = tmp;
 						file.unget();
 						if (c == '\n') {
@@ -697,7 +708,7 @@ namespace simple {
 					if (tok.val == "void") tok.type = VOID;
 				}
 
-				
+
 				if (c == '\n') {
 					row--;
 					col = source[row - 1].size();
@@ -708,6 +719,13 @@ namespace simple {
 					tok.col = col - tok.val.size() + 1;
 				}
 				tok.row = row;
+				if (tok.type == COM) {
+					int c = 0;
+					for (int i = 0; i < tmp.length(); i++) {
+						if (tmp[i] == '\n') c++;
+					}
+					tok.row -= c;
+				}
 				file.unget();
 				
 				return tok;

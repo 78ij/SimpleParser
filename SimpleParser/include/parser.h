@@ -13,7 +13,12 @@ namespace simple {
 		return ret;
 	}
 
-	inline void pl(int l,ostream &out = cout) {
+	inline void pl(int l) {
+		for (int i = 0; i < l * 2; i++)
+			cout << ' ';
+	}
+
+	inline void pl(int l,ostream &out) {
 		for (int i = 0; i < l * 4; i++)
 			out << ' ';
 	}
@@ -32,6 +37,7 @@ namespace simple {
 
 	class ast_node {
 	public:
+		bool isinfunc = false; // Compound Statement
 		virtual void print(int l) {}
 		virtual void format(int l,ostream &out) {}
 	};
@@ -107,12 +113,21 @@ namespace simple {
 			}
 		}
 		void format(int l,ostream &out) override {
-			pl(l - 1, out);
+			if (isinfunc)
+				pl(l - 1, out);
+			else
+				pl(l, out);
 			out << "{\n";
 			for (int i = 0; i < body.length; i++) {
-				body[i]->format(l,out);
+				if (isinfunc)
+					body[i]->format(l, out);
+				else
+					body[i]->format(l + 1, out);
 			}
-			pl(l - 1, out);
+			if (isinfunc)
+				pl(l - 1, out);
+			else 
+				pl(l, out);
 			out << "}\n";
 		}
 	};
@@ -168,16 +183,19 @@ namespace simple {
 			out << "if(";
 			cond->format(l + 1,out);
 			out << ") \n";
+			body->isinfunc = true;
 			body->format(l + 1,out);
 			for (int i = 0; i < elif.length; i++) {
 				pl(l, out);
 				out << "else if(";
 				elifcond[i]->format( l + 1,out);
 				out << ")\n";
+				elif[i]->isinfunc = true;
 				elif[i]->format(l + 1, out);
 			}
 			if (el != nullptr) {
 				pl(l, out);
+				el->isinfunc = true;
 				out << "else\n";
 				el->format(l + 1,out);
 			}
@@ -204,6 +222,7 @@ namespace simple {
 			out << "while(";
 			cond->format(l + 1,out);
 			out << ") \n";
+			body->isinfunc = true;
 			body->format(l + 1,out);
 		}
 	};
@@ -234,6 +253,7 @@ namespace simple {
 			}
 			pl(l);
 			cout << "Body:\n";
+
 			body->print(l + 1);
 		}
 		void format(int l, ostream &out) override {
@@ -251,6 +271,7 @@ namespace simple {
 				iter->format(l + 1,out);
 			}
 			out << ")\n";
+			body->isinfunc = true;
 			body->format(l + 1,out);
 		}
 	};
@@ -311,13 +332,13 @@ namespace simple {
 				out << ");\n";
 			}
 			else {
-				out << id << "( ";
+				out << id << "(";
 				for (int i = 0; i < params.length - 1; i++) {
 					params[i]->format(l + 1,out);
 					out << ",";
 				}
 				params[params.length - 1]->format(l + 1,out);
-				out << ") ";
+				out << ")";
 			}
 		}
 	};
@@ -428,17 +449,17 @@ namespace simple {
 			for (int i = 0; i < vars.length - 1; i++) {
 				out << vars[i].ident;
 				if (vars[i].isarray) {
-					out << "[ ";
+					out << "[";
 					out << vars[i].arraysize;
-					out << " ] ";
+					out << "]";
 				}
 				out << ", ";
 			}
 			out << vars[vars.length - 1].ident;
 			if (vars[vars.length - 1].isarray) {
-				out << "[ ";
+				out << "[";
 				out << vars[vars.length - 1].arraysize;
-				out << " ] ";
+				out << "]";
 			}
 			out << ";\n";
 		}
@@ -497,9 +518,9 @@ namespace simple {
 				pl(l, out);
 			out << id;
 			if (isarray) {
-				out << "[ ";
+				out << "[";
 				num->format(l + 1,out);
-				out << "] ";
+				out << "]";
 			}
 			out << " = ";
 			right->format(l + 1,out);
