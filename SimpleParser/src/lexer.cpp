@@ -35,14 +35,12 @@ namespace simple {
 	token lexer::isspsymbol(char c) {
 		token tok;
 		tok.type = ERROR;
-		tok.val = 'd';
-		if (c == '!')
-			tok.type = NOT;
+		tok.val = ' ';
 		if (c == ',')
 			tok.type = COMMA;
-		if (c == ';')
+		else if (c == ';')
 			tok.type = SEMI;
-		if (c == '<') {
+		else if (c == '<') {
 			char t;
 			file.get(t);
 			if (t == '=') {
@@ -54,7 +52,7 @@ namespace simple {
 				file.unget();
 			}
 		}
-		if (c == '>') {
+		else if (c == '>') {
 			char t;
 			file.get(t);
 			if (t == '=') {
@@ -66,7 +64,7 @@ namespace simple {
 				file.unget();
 			}
 		}
-		if (c == '!') {
+		else if (c == '!') {
 			char t;
 			file.get(t);
 			if (t == '=') {
@@ -78,29 +76,29 @@ namespace simple {
 				file.unget();
 			}
 		}
-		if (c == '(')
+		else if (c == '(')
 			tok.type = LP;
-		if (c == ')')
+		else if (c == ')')
 			tok.type = RP;
-		if (c == '[')
+		else if (c == '[')
 			tok.type = LB;
-		if (c == ']')
+		else if (c == ']')
 			tok.type = RB;
-		if (c == '{')
+		else if (c == '{')
 			tok.type = LC;
-		if (c == '}')
+		else if (c == '}')
 			tok.type = RC;
-		if (c == '+')
+		else if (c == '+')
 			tok.type = PLUS;
-		if (c == '-')
+		else if (c == '-')
 			tok.type = MINUS;
-		if (c == '*')
+		else if (c == '*')
 			tok.type = MULTIPLY;
-		if (c == '/')
+		else if (c == '/')
 			tok.type = DIVIDE;
-		if (c == '%')
+		else if (c == '%')
 			tok.type = MOD;
-		if (c == '&') {
+		else if (c == '&') {
 			char t;
 			file.get(t);
 			if (t == '&') {
@@ -112,7 +110,7 @@ namespace simple {
 				file.unget();
 			}
 		}
-		if (c == '|') {
+		else if (c == '|') {
 			char t;
 			file.get(t);
 			if (t == '|') {
@@ -124,7 +122,7 @@ namespace simple {
 				file.unget();
 			}
 		}
-		if (c == '!') {
+		else if (c == '!') {
 			char t;
 			file.get(t);
 			if (t == '=') {
@@ -136,7 +134,7 @@ namespace simple {
 				file.unget();
 			}
 		}
-		if (c == '=') {
+		else if (c == '=') {
 			char t;
 			file.get(t);
 			if (t == '=') {
@@ -148,13 +146,13 @@ namespace simple {
 				file.unget();
 			}
 		}
-		if(tok.val == "") tok.val = c;
+		else if (tok.val == "") tok.val = c;
 		return tok;
 	}
 	token lexer::gettoken(){
 		enum lexerstate {
 			ERR, START, ID, DONE,INT_C,FLOAT_C, FLOAT_OR_INT, ZERO,HEX,OCTINT,E_FLOAT_C,D_FLOAT_C,
-			CHAR_C,CHARERR, /*Man,i really dont want to add this*/ SLASHCOMMENT,ASTERISKCOMMENT,PREPROC
+			CHAR_C,CHARERR,STRING,STRINGERR, /*Man,i really dont want to add this*/ SLASHCOMMENT,ASTERISKCOMMENT,PREPROC
 		};
 		lexerstate state = START;
 		char c;
@@ -221,11 +219,15 @@ namespace simple {
 						tmp.push_back(c);
 					}
 				}
+				else if (c == '\"') {
+					state = STRING;
+				}
 				else {
 					state = ERR;
 					tmp.push_back(c);
 				}
 				break;
+			
 			case PREPROC:
 				if (c == '\n') {
 					state = DONE;
@@ -261,6 +263,7 @@ namespace simple {
 						break;
 					}
 					file.unget();
+					tmp.push_back('*');
 				}
 				else
 					tmp.push_back(c);
@@ -279,6 +282,55 @@ namespace simple {
 				}
 				else {
 					tmp.push_back(c);
+				}
+				break;
+			case STRING:
+				if (c != '\\' && c != '\"' && c != '\n') tmp.push_back(c);
+				else if (c == '\\') {
+					tmp.push_back(c);
+					file.get(c);
+					if (c != '\'' && !isalpha(c) && c != '\\') {
+						tmp.push_back(c);
+						state = STRINGERR;
+						break;
+					}
+					else tmp.push_back(c);
+				}
+				else if (c == '\"') {
+					tok.type = CSTRING;
+					tok.val = tmp;
+					state = DONE;
+					col--;
+					if (c == '\n') {
+						row--;
+						col = source[row - 1].size() - 1;
+					}
+				}
+				else if (c == ' ' || c == '\n') {
+					tok.type = ERROR;
+					tok.val = tmp;
+					state = DONE;
+					col--;
+					if (c == '\n') {
+						row--;
+						col = source[row - 1].size() - 1;
+					}
+				}
+				break;
+			case STRINGERR:
+				if (c != ' ' && c != '\n') {
+					tmp.push_back(c);
+				}
+				else {
+					tmp.push_back(c);
+					tok.type = ERROR;
+					tok.val = tmp;
+					state = DONE;
+					col--;
+					if (c == '\n') {
+						row--;
+						col = source[row - 1].size() - 1;
+					}
 				}
 				break;
 			case CHAR_C:
@@ -341,7 +393,7 @@ namespace simple {
 				}
 				break;
 			case CHARERR:
-				if (c != ' ' && c != '\'') {
+				if (c != ' ' && c != '\'' && c != '\n') {
 					tmp.push_back(c);
 				}
 				else {
@@ -386,11 +438,17 @@ namespace simple {
 					tmp.push_back(c);
 					state = E_FLOAT_C;
 				}
+				else if (c == 'l' || c == 'L') {
+					tok.type = CULONG;
+					state = DONE;
+					tok.val = tmp;
+
+				}
 				else {
 					if (c == 'u' || c == 'U') {
-						char tmp;
-						file.get(tmp);
-						if (tmp == 'l' || tmp == 'L') {
+						char t;
+						file.get(t);
+						if (t == 'l' || t == 'L') {
 							tok.type = CULONG;
 						}
 						else {
@@ -474,6 +532,7 @@ namespace simple {
 					file.unget();
 					state = FLOAT_C;
 				}
+
 				else {
 					if (c == '\n') {
 						row--;
@@ -573,11 +632,10 @@ namespace simple {
 				if (isdigit(c))
 					tmp.push_back(c);
 				else {
-
 					if (c == 'u' || c == 'U') {
-						char tmp;
-						file.get(tmp);
-						if (tmp == 'l' || tmp == 'L') {
+						char t;
+						file.get(t);
+						if (t == 'l' || t == 'L') {
 							tok.type = CULONG;
 						}
 						else {
@@ -585,19 +643,37 @@ namespace simple {
 							tok.type = CUINT;
 						}
 						file.get();
+						state = DONE;
+						col--;
+						tok.val = tmp;
+						file.unget();
+						if (c == '\n') {
+							row--;
+							col = source[row - 1].size() - 1;
+						}
 					}
 					else if (c == 'l' || c == 'L') {
 						file.get();
 						tok.type = CLONG;
+						state = DONE;
+						col--;
+						tok.val = tmp;
+						file.unget();
+						if (c == '\n') {
+							row--;
+							col = source[row - 1].size() - 1;
+						}
 					}
-					else tok.type = CINT;
-					state = DONE;
-					col--;
-					tok.val = tmp;
-					file.unget();
-					if (c == '\n') {
-						row--;
-						col = source[row - 1].size() - 1;
+					else {
+						tok.type = CINT;
+						state = DONE;
+						col--;
+						tok.val = tmp;
+						file.unget();
+						if (c == '\n') {
+							row--;
+							col = source[row - 1].size() - 1;
+						}
 					}
 				}
 				break;
@@ -637,16 +713,23 @@ namespace simple {
 				return tok;
 				break;
 			case ERR:
-				file.unget();
-				if (c == '\n') {
-					row--;
-					col = source[row - 1].size() - 1;
+				if (c != ' ' && c != '\n') {
+					tok.type = ERROR;
+					tmp.push_back(c);
 				}
-				tok.type = ERROR;
-				tok.row = row;
-				tok.col = col;
-				tok.val = tmp;
-				return tok;
+				else {
+					file.unget();
+					if (c == '\n') {
+						row--;
+						col = source[row - 1].size() - 1;
+					}
+					tok.type = ERROR;
+					tok.row = row;
+					tok.col = col;
+					tok.val = tmp;
+					return tok;
+				}
+				
 				break;
 			}
 			

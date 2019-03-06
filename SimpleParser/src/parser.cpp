@@ -9,10 +9,11 @@ namespace simple {
 		if (t == UNSIGNED) {
 			isunsigned = true;
 			next();
+			t = cur_tok.type;
 			if (t == INT) ret = UINT;
 			if (t == LONG) ret = ULONG;
 			if (t == SHORT) ret = USHORT;
-			if (t == CHAR)ret = UCHAR;
+			if (t == CHAR) ret = UCHAR;
 		}
 		else if (t == INT || t == CHAR || t == FLOAT || t == DOUBLE || t == SHORT || t == LONG || t == VOID) {
 			ret = t;
@@ -29,10 +30,12 @@ namespace simple {
 		if (t == UNSIGNED) {
 			isunsigned = true;
 			next();
+			t = cur_tok.type;
 			if (t == INT) ret = true;
 			if (t == LONG) ret = true;
 			if (t == SHORT) ret = true;
 			if (t == CHAR)ret = true;
+			unget();
 		}
 		else if (t == INT || t == CHAR || t == FLOAT || t == DOUBLE || t == SHORT || t == LONG || t == VOID) {
 			ret = true;
@@ -64,6 +67,7 @@ namespace simple {
 				accept(SEMI);
 			}
 			ret->lst.append(tmp);
+			back = false;
 		}
 
 		return ret;
@@ -156,10 +160,24 @@ namespace simple {
 			accept(RP);
 			ast_node *body = stmt();
 			ret->body = body;
-			if (cur_tok.type == ELSE) {
+			while (cur_tok.type == ELSE) {
 				next();
-				ast_node *el = stmt();
-				ret->el = el;
+				if (cur_tok.type == IF) {
+					next();
+					accept(LP);
+					ast_node *elifcond = expr();
+					ret->elifcond.append(elifcond);
+					accept(RP);
+					ast_node *elif = stmt();
+					ret->elif.append(elif);
+					continue;
+				}
+				else {
+					ast_node *el = stmt();
+					ret->el = el;
+					break;
+				}
+
 			}
 			return ret;
 		}
@@ -257,7 +275,11 @@ namespace simple {
 			return ret;
 		}
 		else {
-			unexpect();
+			ast_node *exp = expr();
+			accept(SEMI);
+			ast_node_exprstmt *ret = new ast_node_exprstmt;
+			ret->exp = exp;
+			return ret;
 		}
 	}
 
@@ -268,7 +290,7 @@ namespace simple {
 		if (tok.type == EQ || tok.type == NEQ) return 2;
 		if (tok.type == LE || tok.type == LT || tok.type == GT || tok.type == GE) return 3;
 		if (tok.type == PLUS || tok.type == MINUS) return 4;
-		if (tok.type == MULTIPLY || tok.type == DIVIDE) return 5;
+		if (tok.type == MULTIPLY || tok.type == DIVIDE || tok.type == MOD) return 5;
 		else return -1;
 	}
 
@@ -309,7 +331,7 @@ namespace simple {
 		if (cur_tok.type == CINT || cur_tok.type == CUINT
 			|| cur_tok.type == CLONG || cur_tok.type == CULONG
 			|| cur_tok.type == CCHAR || cur_tok.type == CDOUBLE
-			|| cur_tok.type == CFLOAT) {
+			|| cur_tok.type == CFLOAT || cur_tok.type == CSTRING || cur_tok.type == CCHAR) {
 			ast_node_const *ret = new ast_node_const;
 			ret->tok = cur_tok;
 			next();
@@ -416,10 +438,10 @@ namespace simple {
 		int i = token_table_comments.length - 1;
 		int j = token_table_fmt.length - 1;
 		list<token> com_tmp;
-		for (int i = 0; i < token_table_fmt.length; i++) {
-			token_table_fmt[i].print();
+		//for (int i = 0; i < token_table_fmt.length; i++) {
+		//	token_table_fmt[i].print();
 
-		}
+		//}
 		while (i >= 0 && j >= 0) {
 			if (token_table_comments[i].type != COM) {
 				i--;

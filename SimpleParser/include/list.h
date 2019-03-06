@@ -24,8 +24,9 @@ namespace simple {
 			return *(data[index]);
 		}
 		void append(T ele) {
-			if (length == size) {
+			if (length >= size) {
 				data = (T **)realloc(data, (size + 100) * sizeof(T*));
+				size += 100;
 			}
 			T *tmp = new T;
 			*tmp = ele;
