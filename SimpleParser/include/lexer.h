@@ -116,6 +116,14 @@ namespace simple {
 			o.close();
 			file = ifstream(_path);
 		}
+		~lexer() {
+			if(file.is_open())
+				file.close();
+		}
+		void closefile() {
+			if (file.is_open())
+				file.close();
+		}
 		token gettoken();
 		list<string> source; // Source
 		int row, col;

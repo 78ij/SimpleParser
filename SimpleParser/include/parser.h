@@ -535,7 +535,7 @@ namespace simple {
 		void parse() {
 			root = prog();
 		}
-		void format();
+		void format(string filename);
 		void print() {
 			root->print(0);
 		}

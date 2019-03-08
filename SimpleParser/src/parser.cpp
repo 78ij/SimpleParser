@@ -419,7 +419,7 @@ namespace simple {
 		return ret;
 	}
 
-	void parser::format() {
+	void parser::format(string filename) {
 		ofstream fout(path + ".tmp");
 		root->format(0, fout);
 		fout.close();
@@ -429,6 +429,7 @@ namespace simple {
 		while (getline(fin, tmp)) {
 			fmtsrc.append(tmp);
 		}
+		fin.close();
 		lexer lt(path + ".tmp");
 		token tok;
 		list<token> token_table_fmt;
@@ -439,6 +440,8 @@ namespace simple {
 		int i = token_table_comments.length - 1;
 		int j = token_table_fmt.length - 1;
 		list<token> com_tmp;
+		lt.closefile();
+
 		//for (int i = 0; i < token_table_fmt.length; i++) {
 		//	token_table_fmt[i].print();
 
@@ -478,6 +481,8 @@ namespace simple {
 				fmtsrc[0].insert(0, token_table_comments[i--].val + '\n');
 			}
 		}
+		string p = "del " + path + ".tmp";
+		system(p.data());
 		color(2);
 		cout << "Source:-------------------------\n\n";
 		for (int i = 0; i < l.source.length; i++) {
@@ -490,6 +495,11 @@ namespace simple {
 			cout << fmtsrc[i] << "\n";
 		}
 		color(263);
+		ofstream o(filename);
+		if (filename != "")
+			for (int i = 0; i < fmtsrc.length; i++) {
+				o << fmtsrc[i] << "\n";
+			}
 	}
 
 	void parser::test() {
